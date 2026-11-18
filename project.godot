@@ -62,6 +62,10 @@ inventory={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":73), Object(InputEventKey,"physical_keycode":4194306)]
 }
+decorate={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":66)]
+}
 tool_1={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":49)]

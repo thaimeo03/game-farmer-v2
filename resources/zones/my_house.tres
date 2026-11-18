@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"my_house"
+display_name = "Nhà Của Tôi"
+description = "Ngôi nhà trong nông trại."
+scene_path = "res://scenes/zones/my_house.tscn"
+order = 9
+on_bus_route = false

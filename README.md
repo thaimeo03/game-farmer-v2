@@ -2,7 +2,7 @@
 
 Game 3D nông trại mạng xã hội phong cách low-poly, làm bằng **Godot 4.7** (GDScript).
 
-- Trồng trọt, câu cá, đua thú, đi xe buýt giữa các khu (Nông Trại, Bến Xe, Phố Chợ, Công Viên Vui Vẻ, Bãi Biển).
+- Trồng trọt, chăn nuôi, chế biến, giao đơn hàng, trang trí nhà riêng, câu cá, đua thú, đi xe buýt giữa các khu (Nông Trại, Bến Xe, Phố Chợ, Công Viên Vui Vẻ, Bãi Biển).
 - Lưu game tự động, cây lớn khi offline, cấp độ mở khóa khu.
 
 ## Chạy
@@ -15,6 +15,7 @@ Mở thư mục này bằng Godot 4.7, nhấn F5 (scene chính: `scenes/main/mai
 | E / Space / Click | Tương tác |
 | 1–5 | Công cụ (bấm Hạt giống lần nữa để đổi hạt) |
 | I / Tab | Túi đồ |
+| B (trong nhà) | Trang trí: click đặt/cất đồ, R xoay |
 | Chuột phải kéo, lăn chuột | Xoay, zoom camera |
 
 ## Test

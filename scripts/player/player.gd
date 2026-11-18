@@ -50,6 +50,7 @@ var seed_index := 0
 var interactable: Node
 
 var _target: FarmPlot
+var _sitting: Furniture
 var _hand: BoneAttachment3D
 var _held: Node3D
 var _bob_t := 0.0
@@ -85,6 +86,10 @@ func _show_tool() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _sitting:
+		if not GameState.ui_busy and Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back").length() > 0.1:
+			stand_up()
+		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 
@@ -149,6 +154,10 @@ func tool_label(t: int = tool) -> String:
 
 
 func teleport(pos: Vector3) -> void:
+	if _sitting:
+		_sitting = null
+		$CollisionShape3D.set_deferred(&"disabled", false)
+		_set_state(State.IDLE)
 	global_position = pos
 	velocity = Vector3.ZERO
 	cam.snap()
@@ -156,6 +165,9 @@ func teleport(pos: Vector3) -> void:
 
 
 func try_interact() -> void:
+	if _sitting:
+		stand_up()
+		return
 	if state == State.ACTION or GameState.ui_busy:
 		return
 	if is_instance_valid(interactable):
@@ -204,6 +216,30 @@ func begin_activity(anim_name: StringName, face_point: Vector3) -> void:
 
 
 func end_activity() -> void:
+	_set_state(State.IDLE)
+
+
+func is_sitting() -> bool:
+	return _sitting != null
+
+
+func sit_on(seat: Furniture) -> void:
+	_sitting = seat
+	state = State.ACTION
+	velocity = Vector3.ZERO
+	$CollisionShape3D.set_deferred(&"disabled", true) # we are inside the seat's collider
+	global_position = seat.seat_point()
+	visual.rotation.y = seat.facing_yaw()
+	if anim and anim.has_animation(&"sit"):
+		anim.play(&"sit", 0.2)
+
+
+func stand_up() -> void:
+	if not _sitting:
+		return
+	global_position = _sitting.stand_point()
+	_sitting = null
+	$CollisionShape3D.set_deferred(&"disabled", false)
 	_set_state(State.IDLE)
 
 

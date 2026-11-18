@@ -4,7 +4,7 @@ extends Node
 
 signal money_changed
 signal toasted(text: String)
-signal travel_requested(zone_id: StringName)
+signal travel_requested(zone_id: StringName, spawn: StringName)
 signal bus_requested(stop: BusStop)
 signal shop_requested(npc: ShopNpc)
 signal race_requested(race: PetRace)
@@ -70,5 +70,6 @@ func toast(text: String) -> void:
 	toasted.emit(text)
 
 
-func travel(zone_id: StringName) -> void:
-	travel_requested.emit(zone_id)
+## Empty spawn = by bus (arrive at the BusStop); otherwise walk in to that Marker3D (doors).
+func travel(zone_id: StringName, spawn: StringName = &"") -> void:
+	travel_requested.emit(zone_id, spawn)

@@ -2,7 +2,7 @@ class_name ItemData
 extends Resource
 ## Anything that can sit in the inventory. One .tres per item in res://resources/items/.
 
-enum Category { SEED, PRODUCE, FISH, TOOL, OUTFIT, MISC, ANIMAL, GOODS } ## append only: values are stored in .tres
+enum Category { SEED, PRODUCE, FISH, TOOL, OUTFIT, MISC, ANIMAL, GOODS, FURNITURE } ## append only: values are stored in .tres
 
 @export var id: StringName
 @export var display_name := ""

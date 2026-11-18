@@ -21,6 +21,10 @@ var _bar_time_left := 0.0
 var _level_label: Label
 var _xp_bar: ProgressBar
 var _banner: Label
+var _info: Label
+var _decor_panel: PanelContainer
+var _decor_list: VBoxContainer
+var _house: House
 
 @onready var _coins: Label = %Coins
 @onready var _gems: Label = %Gems
@@ -48,6 +52,7 @@ func _ready() -> void:
 	%ShopClose.pressed.connect(close_panels)
 	_build_timing_bar()
 	_build_level_and_banner()
+	_build_decorate_panel()
 	_refresh_money()
 	_refresh_level()
 
@@ -120,7 +125,7 @@ func open_bus(_stop: BusStop) -> void:
 	_clear(_shop_list)
 	_shop_title.text = "Bảng Tuyến Xe Buýt"
 	for zone in Database.zones:
-		if zone.id == GameState.current_zone:
+		if zone.id == GameState.current_zone or not zone.on_bus_route:
 			continue
 		var row := HBoxContainer.new()
 		var info := _label("%s
@@ -165,6 +170,23 @@ func open_menu(title: String, rows: Array) -> void:
 		_shop_list.add_child(row)
 	if rows.is_empty():
 		_shop_list.add_child(_label("Không có gì ở đây."))
+
+
+## Small line under the top bar (e.g. house beauty score). Empty hides it.
+func show_info(text: String) -> void:
+	_info.text = text
+
+
+func show_decorate(house: House) -> void:
+	_house = house
+	_inventory_panel.hide()
+	_decor_panel.show()
+	_refresh_decorate()
+
+
+func hide_decorate() -> void:
+	_decor_panel.hide()
+	_house = null
 
 
 func show_banner(text: String) -> void:
@@ -308,6 +330,8 @@ func _on_inventory_changed() -> void:
 		_refresh_inventory()
 	if _shop_panel.visible and _shop:
 		_refresh_shop()
+	if _decor_panel.visible:
+		_refresh_decorate()
 
 
 func _refresh_money() -> void:
@@ -384,3 +408,59 @@ func _clear(node: Node) -> void:
 	for c in node.get_children():
 		node.remove_child(c)
 		c.queue_free()
+
+
+func _build_decorate_panel() -> void:
+	_info = Label.new()
+	_info.position = Vector2(16, 64)
+	_info.add_theme_color_override(&"font_outline_color", Color.WHITE)
+	_info.add_theme_constant_override(&"outline_size", 6)
+	$Root.add_child(_info)
+	_decor_panel = PanelContainer.new()
+	_decor_panel.visible = false
+	_decor_panel.position = Vector2(16, 100)
+	_decor_panel.custom_minimum_size = Vector2(250, 0)
+	$Root.add_child(_decor_panel)
+	var box := VBoxContainer.new()
+	_decor_panel.add_child(box)
+	var title := _label("Trang trí nhà")
+	title.add_theme_font_size_override(&"font_size", 20)
+	box.add_child(title)
+	box.add_child(_label("Chọn đồ rồi click lên sàn.
+Click đồ đã đặt để cất. R: xoay"))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 260)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	_decor_list = VBoxContainer.new()
+	_decor_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_decor_list)
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	for spec in [["Xoay", func() -> void: _house.rotate_selection()], ["Sàn ▶", func() -> void: _house.next_floor()],
+			["Tường ▶", func() -> void: _house.next_wall()], ["Xong", func() -> void: _house.set_decorating(false)]]:
+		var b := Button.new()
+		b.text = spec[0]
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(spec[1])
+		row.add_child(b)
+
+
+func _refresh_decorate() -> void:
+	_clear(_decor_list)
+	for item in GameState.inventory.items(ItemData.Category.FURNITURE):
+		var data: FurnitureData = Database.furniture.get(item.id)
+		if not data:
+			continue
+		var b := Button.new()
+		b.text = "%s x%d" % [item.display_name, GameState.inventory.count(item)]
+		b.toggle_mode = true
+		b.button_pressed = _house != null and _house.selected == data
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(func() -> void:
+			_house.select(data)
+			_refresh_decorate())
+		_decor_list.add_child(b)
+	if _decor_list.get_child_count() == 0:
+		_decor_list.add_child(_label("Túi chưa có nội thất.
+Mua ở Phố Chợ."))

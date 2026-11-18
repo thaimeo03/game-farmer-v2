@@ -25,22 +25,25 @@ func _exit_tree() -> void:
 			zone.free()
 
 
-func travel(zone_id: StringName) -> void:
+func travel(zone_id: StringName, spawn: StringName = &"") -> void:
 	var dest := Database.zone(zone_id)
 	if _busy or dest == null or zone_id == GameState.current_zone:
 		return
 	_busy = true
 	GameState.ui_busy = true
-	var stop := _bus_stop()
+	var by_bus := spawn == &""
+	var stop := _bus_stop() if by_bus else null
 	if stop:
 		await stop.depart(_player)
-	await _hud.fade(1.0, 0.5)
-	_hud.show_banner("Đang đến %s..." % dest.display_name)
-	await _enter_zone(zone_id, true)
-	await get_tree().create_timer(0.8).timeout
+	await _hud.fade(1.0, 0.5 if by_bus else 0.3)
+	if by_bus:
+		_hud.show_banner("Đang đến %s..." % dest.display_name)
+	await _enter_zone(zone_id, by_bus, spawn)
+	if by_bus:
+		await get_tree().create_timer(0.8).timeout
 	_hud.show_banner("")
-	await _hud.fade(0.0, 0.5)
-	stop = _bus_stop()
+	await _hud.fade(0.0, 0.5 if by_bus else 0.3)
+	stop = _bus_stop() if by_bus else null
 	if stop:
 		await stop.arrive(_player)
 	SaveManager.save_game()
@@ -48,7 +51,7 @@ func travel(zone_id: StringName) -> void:
 	_busy = false
 
 
-func _enter_zone(zone_id: StringName, at_bus_stop: bool) -> void:
+func _enter_zone(zone_id: StringName, at_bus_stop: bool, spawn: StringName = &"") -> void:
 	var data := Database.zone(zone_id)
 	if data == null:
 		push_warning("Unknown zone '%s', going home" % zone_id)
@@ -62,8 +65,8 @@ func _enter_zone(zone_id: StringName, at_bus_stop: bool) -> void:
 	add_child.call_deferred(_zone)
 	await get_tree().process_frame
 	var stop := _bus_stop()
-	var spawn := _zone.get_node_or_null(^"PlayerSpawn") as Node3D
-	var target: Node3D = stop.exit_point if stop and (at_bus_stop or not spawn) else spawn
+	var marker := _zone.get_node_or_null(NodePath(spawn if spawn else &"PlayerSpawn")) as Node3D
+	var target: Node3D = marker if spawn and marker else (stop.exit_point if stop and (at_bus_stop or not marker) else marker)
 	_player.teleport(target.global_position if target else Vector3.UP)
 
 

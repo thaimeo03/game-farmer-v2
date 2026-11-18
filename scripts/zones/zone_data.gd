@@ -9,3 +9,4 @@ extends Resource
 @export var unlock_level := 1
 @export var ticket_price := 0 ## xu per bus ride to this zone
 @export var order := 0 ## position on the route board
+@export var on_bus_route := true ## false for places reached on foot (the house)

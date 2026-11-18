@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/furniture/kitchenStove.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"kitchen_stove"
+display_name = "Bếp ga"
+description = "Bếp ga nấu ăn."
+category = 8
+color = Color(0.85, 0.7, 0.5, 1)
+buy_price = 110
+sell_price = 55
+model = ExtResource("2_model")

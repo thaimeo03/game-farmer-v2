@@ -12,6 +12,7 @@ func _ready() -> void:
 	test_minigames()
 	await test_world()
 	await test_farm_plus()
+	await test_house()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -120,8 +121,9 @@ func test_minigames() -> void:
 func test_world() -> void:
 	# content database
 	_check(Database.item(&"fish_gold") != null and Database.crop(&"tomato") != null, "database finds items and crops by id")
-	_check(Database.zones.size() == 5 and Database.zones[0].id == &"my_farm", "5 zones, ordered")
-	for z in Database.zones:
+	_check(Database.zones.size() == 6 and Database.zones[0].id == &"my_farm", "6 zones, ordered")
+	_check(Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route).size() == 5, "5 zones on the bus route")
+	for z in Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route):
 		var root: Node = load(z.scene_path).instantiate()
 		_check(root.find_child("BusStop", true, false) is BusStop, "zone %s has a BusStop" % z.id)
 		root.free()
@@ -280,6 +282,65 @@ func test_farm_plus() -> void:
 	# v1 save (plots only) still loads
 	FileAccess.open(SaveManager.path, FileAccess.WRITE).store_string(JSON.stringify({"version": 1, "unix": 0, "farm": [{"cell": [0, 0], "state": 1}]}))
 	_check(SaveManager.load_game() and SaveManager._pending.farm_grid.plots.size() == 1, "v1 save migrated")
+
+
+func test_house() -> void:
+	SaveManager._pending.erase("house")
+	var inv := GameState.inventory
+	var root: Node = load("res://scenes/zones/my_house.tscn").instantiate()
+	add_child(root)
+	await get_tree().process_frame
+	var house := root as House
+	_check(Database.furniture.size() >= 20, "20+ furniture kinds")
+	_check(house.beauty() > 0 and house.furniture_at(Vector2i(0, 0)) != null, "new house has starter furniture")
+	var start_beauty := house.beauty()
+
+	var sofa: FurnitureData = Database.furniture[&"sofa"]
+	_check(sofa.size_for(0) == Vector2i(2, 1) and sofa.size_for(1) == Vector2i(1, 2), "rotation swaps footprint")
+	_check(house.place(sofa, Vector2i(5, 4), 0) == null, "cannot place furniture you do not own")
+	inv.add(sofa.item, 1)
+	_check(not house.can_place(sofa, Vector2i(7, 4), 0), "footprint must stay inside the room")
+	var placed := house.place(sofa, Vector2i(5, 4), 0)
+	_check(placed != null and inv.count(sofa.item) == 0, "placed sofa uses the bag item")
+	_check(house.furniture_at(Vector2i(6, 4)) == placed, "sofa covers both cells")
+	inv.add(sofa.item, 1)
+	_check(not house.can_place(sofa, Vector2i(6, 4), 1), "no overlap on the solid layer")
+	var rug: FurnitureData = Database.furniture[&"rug_rect"]
+	inv.add(rug.item, 1)
+	_check(house.place(rug, Vector2i(5, 4), 0) != null, "rugs go under furniture (floor layer)")
+	_check(house.beauty() == start_beauty + sofa.beauty + rug.beauty, "beauty adds up")
+
+	# decorate-mode click picks up / places
+	house.select(null)
+	house.click_cell(Vector2i(5, 4))
+	_check(house.furniture_at(Vector2i(5, 4)) != placed and inv.count(sofa.item) == 2, "click picks furniture back up")
+	house.select(sofa)
+	house.click_cell(Vector2i(0, 4))
+	_check(house.furniture_at(Vector2i(1, 4)) != null, "click places the selection")
+
+	# sitting
+	var p: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child(p)
+	await get_tree().process_frame
+	var seat := house.furniture_at(Vector2i(0, 4))
+	p.sit_on(seat)
+	_check(p.is_sitting() and p.global_position.distance_to(seat.seat_point()) < 0.01, "player sits on the sofa")
+	p.try_interact()
+	_check(not p.is_sitting(), "E stands up")
+	p.free()
+
+	# styles + save round trip
+	house.next_floor()
+	house.next_wall()
+	var saved := house.to_save()
+	_check(int(saved.floor) == 1 and int(saved.wall) == 1 and saved.items.size() == house._items.get_children().filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size(), "house state serialized")
+	root.free()
+	SaveManager._pending["house"] = JSON.parse_string(JSON.stringify(saved))
+	var root2: Node = load("res://scenes/zones/my_house.tscn").instantiate()
+	add_child(root2)
+	await get_tree().process_frame
+	_check((root2 as House).to_save().items.size() == saved.items.size() and (root2 as House).floor_style == 1, "house layout restored")
+	root2.free()
 
 
 func _check(ok: bool, msg: String) -> void:
