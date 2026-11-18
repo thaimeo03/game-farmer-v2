@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"fun_park"
+display_name = "Công Viên Vui Vẻ"
+description = "Đua thú và trò chơi giải trí."
+scene_path = "res://scenes/zones/fun_park.tscn"
+unlock_level = 2
+ticket_price = 10
+order = 3

@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/minigames/pet_race.gd" id="race"]
+[ext_resource type="Script" path="res://scripts/utils/interact_zone.gd" id="zone"]
+[ext_resource type="PackedScene" path="res://assets/models/props/race_gate.glb" id="gate"]
+[ext_resource type="PackedScene" path="res://assets/models/props/bleachers.glb" id="bleach"]
+[ext_resource type="PackedScene" path="res://assets/models/props/shop_stall.glb" id="stall"]
+
+[sub_resource type="SphereShape3D" id="Detect"]
+radius = 1.8
+
+[sub_resource type="BoxShape3D" id="Solid"]
+size = Vector3(2.6, 2, 2.4)
+
+[node name="PetRace" type="Node3D"]
+script = ExtResource("race")
+
+[node name="StartGate" parent="." instance=ExtResource("gate")]
+
+[node name="StartLabel" type="Label3D" parent="StartGate"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.3, 0)
+billboard = 1
+text = "XUẤT PHÁT"
+font_size = 72
+outline_size = 16
+
+[node name="FinishGate" parent="." instance=ExtResource("gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -30)
+
+[node name="FinishLabel" type="Label3D" parent="FinishGate"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.3, 0)
+billboard = 1
+text = "ĐÍCH"
+font_size = 72
+outline_size = 16
+
+[node name="Bleachers" parent="." instance=ExtResource("bleach")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 7.5, 0, -22)
+
+[node name="Desk" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 3)
+script = ExtResource("zone")
+prompt_text = "[E] Đặt cược đua thú"
+prompt_height = 3.5
+
+[node name="Detect" type="CollisionShape3D" parent="Desk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1)
+shape = SubResource("Detect")
+
+[node name="Solid" type="StaticBody3D" parent="Desk"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Desk/Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -0.6)
+shape = SubResource("Solid")
+
+[node name="Stall" parent="Desk" instance=ExtResource("stall")]
+
+[node name="KeeperSpot" type="Node3D" parent="Desk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+
+[node name="Sign" type="Label3D" parent="Desk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.95, -0.4)
+billboard = 1
+outline_modulate = Color(0.36, 0.2, 0.1, 1)
+text = "Quản Trường Đua Thú"
+font_size = 56
+outline_size = 14
+
+[node name="OverviewCam" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 8.5, -9)
+fov = 55.0

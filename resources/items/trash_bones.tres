@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/food/fish-bones.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"trash_bones"
+display_name = "Xương cá"
+description = "Ai vứt ở đây vậy?"
+category = 5
+color = Color(0.92, 0.9, 0.82, 1)
+buy_price = 0
+sell_price = 2
+model = ExtResource("2_model")

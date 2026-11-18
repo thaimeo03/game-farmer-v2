@@ -1,0 +1,176 @@
+extends Node
+## Run: godot --headless --path . tests/run_tests.tscn   (exit code 1 on failure)
+## A scene (not a -s script) so autoloads like GameState are available.
+
+var _fails := 0
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	await test_farm()
+	test_economy()
+	test_minigames()
+	await test_world()
+	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
+	get_tree().quit(1 if _fails else 0)
+
+
+func test_farm() -> void:
+	var farm: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm)
+	await get_tree().process_frame
+	var crop: CropData = load("res://resources/crops/carrot.tres")
+	var grid: FarmGrid = farm.get_node(^"FarmGrid")
+
+	# Grid: origin (-3.6, 0, -2.4), 6x4 cells of 1.2
+	_check(grid.get_plot_at(Vector3(-3.0, 0, -2.0)) == grid.get_plot(Vector2i(0, 0)), "cell (0,0) lookup")
+	_check(grid.get_plot_at(Vector3(3.5, 0, 2.3)) == grid.get_plot(Vector2i(5, 3)), "cell (5,3) lookup")
+	_check(grid.get_plot_at(Vector3(-3.7, 0, 0)) == null, "outside grid -> null")
+
+	var plot := grid.get_plot(Vector2i(2, 1))
+	var got: Array[CropData] = []
+	grid.crop_harvested.connect(func(_p: FarmPlot, c: CropData) -> void: got.append(c))
+
+	_check(plot.can(&"till") and not plot.can(&"plant") and not plot.can(&"water"), "fresh plot only tillable")
+	plot.perform(&"till")
+	_check(plot.can(&"plant"), "tilled -> plantable")
+	plot.perform(&"plant", crop)
+	GameState.clock += 100.0
+	plot._process(0.0)
+	_check(plot.stage == 0, "no growth while dry")
+	_check(plot.can(&"water"), "planted -> waterable")
+	plot.perform(&"water")
+	for d in crop.stage_durations:
+		_check(not plot.can(&"harvest"), "not harvestable before mature")
+		GameState.clock += d
+		plot._process(0.0)
+	_check(crop.stage_at(0.0) == 0 and crop.stage_at(1e6) == crop.stage_durations.size(), "stage_at bounds")
+	_check(crop.produce != null, "crop has produce item")
+	_check(plot.can(&"harvest"), "mature -> harvestable")
+	plot.perform(&"harvest")
+	_check(got == [crop], "harvest emits crop via grid")
+	_check(plot.state == FarmPlot.State.NORMAL and plot.crop == null and not plot.is_watered, "plot reset")
+
+	_check(InputMap.has_action(&"interact") and InputMap.action_get_events(&"interact").size() == 3, "input map loaded")
+
+	farm.free()
+
+
+func test_economy() -> void:
+	var gs := GameState
+	var seed_item: ItemData = load("res://resources/items/seed_tomato.tres")
+	var tomato: ItemData = load("res://resources/items/tomato.tres")
+	var inv: Inventory = gs.inventory
+
+	_check(inv.count(load("res://resources/items/seed_carrot.tres")) == 5 and gs.coins == 100, "starting kit")
+	_check(seed_item.crop.produce == tomato, "seed -> crop -> produce chain")
+
+	_check(gs.buy(seed_item, 3) and gs.coins == 70 and inv.count(seed_item) == 3, "buy 3 seeds")
+	_check(not gs.buy(seed_item, 100) and gs.coins == 70, "cannot overspend")
+	_check(not gs.buy(tomato, 1), "produce not buyable")
+
+	inv.add(tomato, 2)
+	_check(inv.items(ItemData.Category.PRODUCE) == [tomato], "category filter")
+	_check(not gs.sell(tomato, 3) and gs.coins == 70, "cannot sell more than owned")
+	_check(gs.sell(tomato, 2) and gs.coins == 130 and inv.count(tomato) == 0, "sell 2 tomatoes")
+	_check(not tomato in inv.items(), "empty stack removed")
+
+	var city: Node = load("res://scenes/zones/market_town.tscn").instantiate()
+	var shop: ShopNpc = city.get_node(^"SeedShop")
+	_check(shop.stock.size() == 4 and shop.stock[0] is ItemData, "seed shop stock loaded (3 seeds + bait)")
+	city.free()
+
+	gs.clock = 0.0
+	_check(gs.time_text() == "Ngày 1  06:00", "clock start")
+	gs.clock = 18.0 * 60.0 / gs.MINUTES_PER_SECOND
+	_check(gs.time_text() == "Ngày 2  00:00", "clock rolls day")
+
+
+
+func test_minigames() -> void:
+	var race: PetRace = load("res://scenes/minigames/pet_race.tscn").instantiate()
+	add_child(race)
+	_check(race.racers.size() == 5 and race.racers[0].node is Node3D, "race spawns 5 racers")
+	race.racing = true
+	for i in 600:
+		race._process(0.05)
+		if not race.racing:
+			break
+	_check(not race.racing and race._winner >= 0, "race always finishes with a winner")
+	_check(race.racers[race._winner].node.position.z <= -race.track_length, "winner crossed the line")
+	race.queue_free()
+
+	var spot := FishingSpot.new()
+	var counts := [0, 0, 0, 0, 0]
+	for i in 4000:
+		counts[spot._pick()] += 1
+	_check(counts.min() > 0, "every catch can happen")
+	_check(counts[2] == counts.min(), "gold fish is the rarest catch")
+	_check(spot.catches[2].sell_price > spot.catches[0].sell_price, "rare fish sells for more")
+	spot.free()
+
+
+func test_world() -> void:
+	# content database
+	_check(Database.item(&"fish_gold") != null and Database.crop(&"tomato") != null, "database finds items and crops by id")
+	_check(Database.zones.size() == 5 and Database.zones[0].id == &"my_farm", "5 zones, ordered")
+	for z in Database.zones:
+		var root: Node = load(z.scene_path).instantiate()
+		_check(root.find_child("BusStop", true, false) is BusStop, "zone %s has a BusStop" % z.id)
+		root.free()
+
+	# progression: level-ups unlock zones
+	Progression.level = 1
+	Progression.xp = 0
+	var beach := Database.zone(&"sunny_beach")
+	_check(not Progression.is_unlocked(beach), "beach locked at level 1")
+	Progression.add_xp(60 + 120)
+	_check(Progression.level == 3 and Progression.xp == 0, "XP rolls over into levels")
+	_check(Progression.is_unlocked(beach), "beach unlocked at level 3")
+
+	# save -> mutate -> load round trip, including a growing plot and offline time
+	SaveManager.path = "user://test_saves/slot_test.json"
+	var farm: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm)
+	await get_tree().process_frame
+	var grid: FarmGrid = farm.get_node(^"FarmGrid")
+	var plot := grid.get_plot(Vector2i(1, 1))
+	plot.perform(&"till")
+	plot.perform(&"plant", Database.crop(&"pumpkin"))
+	plot.perform(&"water")
+	GameState.coins = 321
+	GameState.current_zone = &"fun_park"
+	var bait := Database.item(&"bait")
+	GameState.inventory.add(bait, 7)
+	_check(SaveManager.save_game(), "save written")
+	# fake 1 hour offline: rewrite the timestamp
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveManager.path))
+	data.unix = float(data.unix) - 3600.0
+	FileAccess.open(SaveManager.path, FileAccess.WRITE).store_string(JSON.stringify(data))
+	farm.free()
+	GameState.coins = 0
+	GameState.inventory.remove(bait, 7)
+	Progression.level = 1
+	var clock_before := GameState.clock
+	_check(SaveManager.load_game(), "save loaded")
+	_check(GameState.coins == 321 and GameState.current_zone == &"fun_park" and Progression.level == 3, "wallet, zone, level restored")
+	_check(GameState.inventory.count(bait) >= 7, "inventory restored")
+	_check(GameState.clock >= clock_before + 3599.0, "offline hour added to the clock")
+	var farm2: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm2)
+	await get_tree().process_frame
+	var plot2 := (farm2.get_node(^"FarmGrid") as FarmGrid).get_plot(Vector2i(1, 1))
+	_check(plot2.crop == Database.crop(&"pumpkin") and plot2.state == FarmPlot.State.HARVESTABLE, "planted pumpkin restored and grew offline")
+	_check(SaveManager.pending_farm.is_empty(), "pending farm data consumed")
+	farm2.free()
+
+	# corrupt save is set aside, never crashes
+	FileAccess.open(SaveManager.path, FileAccess.WRITE).store_string("{not json")
+	_check(not SaveManager.load_game() and FileAccess.file_exists(SaveManager.path + ".bad"), "corrupt save kept as .bad")
+	DirAccess.remove_absolute(SaveManager.path + ".bad")
+
+
+func _check(ok: bool, msg: String) -> void:
+	if not ok:
+		_fails += 1
+		printerr("FAIL: " + msg)

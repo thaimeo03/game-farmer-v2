@@ -1,0 +1,162 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/city/shop_npc.tscn" id="1_npc"]
+[ext_resource type="PackedScene" path="res://scenes/zones/bus_stop.tscn" id="bus"]
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="3_item"]
+[ext_resource type="Resource" path="res://resources/items/seed_carrot.tres" id="4_s1"]
+[ext_resource type="Resource" path="res://resources/items/seed_tomato.tres" id="5_s2"]
+[ext_resource type="Resource" path="res://resources/items/seed_pumpkin.tres" id="6_s3"]
+[ext_resource type="Resource" path="res://resources/items/bait.tres" id="7_bait"]
+
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-a.glb" id="b0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-skyscraper-a.glb" id="b1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-c.glb" id="b2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_suburban/building-type-a.glb" id="b3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-c.glb" id="k1"]
+[ext_resource type="Script" path="res://scripts/utils/scatter.gd" id="sc"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_default.glb" id="n0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_oak.glb" id="n1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_fat.glb" id="n2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_detailed.glb" id="n3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_redA.glb" id="n4"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_yellowA.glb" id="n5"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_purpleA.glb" id="n6"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/plant_bush.glb" id="n7"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/grass_large.glb" id="n8"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/plant_bushLarge.glb" id="n9"]
+[ext_resource type="Environment" path="res://resources/world_environment.tres" id="env"]
+[ext_resource type="Script" path="res://scripts/utils/terrain.gd" id="terrain"]
+[ext_resource type="PackedScene" path="res://assets/models/props/fountain.glb" id="fountain"]
+[ext_resource type="PackedScene" path="res://assets/models/props/mountains_ring.glb" id="mount"]
+
+[sub_resource type="StandardMaterial3D" id="StoneMat"]
+albedo_color = Color(0.74, 0.72, 0.68, 1)
+diffuse_mode = 3
+specular_mode = 1
+
+[sub_resource type="CylinderMesh" id="PlazaMesh"]
+material = SubResource("StoneMat")
+top_radius = 11.0
+bottom_radius = 11.0
+height = 0.04
+radial_segments = 24
+
+[sub_resource type="CylinderShape3D" id="FountainShape"]
+height = 0.6
+radius = 2.0
+
+[sub_resource type="BoxShape3D" id="Bld1Shape"]
+size = Vector3(4, 5, 4)
+
+[sub_resource type="BoxShape3D" id="Bld2Shape"]
+size = Vector3(5, 8, 4)
+
+[sub_resource type="BoxShape3D" id="Bld3Shape"]
+size = Vector3(5, 6, 5)
+
+[sub_resource type="BoxShape3D" id="Bld4Shape"]
+size = Vector3(4, 4, 6)
+
+[node name="MarketTown" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, 35, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+script = ExtResource("terrain")
+flat_zones = Array[Rect2]([Rect2(-13, -19, 26, 34), Rect2(-18, 13, 36, 10)])
+paths = Array[Rect2]([Rect2(-1.5, 10.5, 3, 4)])
+random_seed = 8
+
+[node name="Mountains" parent="." instance=ExtResource("mount")]
+
+[node name="Plaza" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("PlazaMesh")
+
+[node name="Fountain" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fountain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+shape = SubResource("FountainShape")
+
+[node name="Model" parent="Fountain" instance=ExtResource("fountain")]
+
+[node name="Buildings" type="Node3D" parent="."]
+
+[node name="Bld1" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2.5, -12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld1"]
+shape = SubResource("Bld1Shape")
+
+[node name="Model" parent="Buildings/Bld1" instance=ExtResource("b0")]
+transform = Transform3D(4.5, 0, 0, 0, 4.5, 0, 0, 0, 4.5, 0, -2.5, 0)
+
+[node name="Bld2" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 4, -15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld2"]
+shape = SubResource("Bld2Shape")
+
+[node name="Model" parent="Buildings/Bld2" instance=ExtResource("b1")]
+transform = Transform3D(3.5, 0, 0, 0, 3.5, 0, 0, 0, 3.5, 0, -4.0, 0)
+
+[node name="Bld3" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3, -15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld3"]
+shape = SubResource("Bld3Shape")
+
+[node name="Model" parent="Buildings/Bld3" instance=ExtResource("b2")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, -3.0, 0)
+
+[node name="Bld4" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2, -10)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld4"]
+shape = SubResource("Bld4Shape")
+
+[node name="Model" parent="Buildings/Bld4" instance=ExtResource("b3")]
+transform = Transform3D(4.5, 0, 0, 0, 4.5, 0, 0, 0, 4.5, 0, -2.0, 0)
+
+[node name="SeedShop" parent="." instance=ExtResource("1_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -4)
+title = "Hạt Giống & Nông Cụ"
+stock = Array[ExtResource("3_item")]([ExtResource("4_s1"), ExtResource("5_s2"), ExtResource("6_s3"), ExtResource("7_bait")])
+color = Color(0.4, 0.75, 0.35, 1)
+
+[node name="Market" parent="." instance=ExtResource("1_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -4)
+title = "Chợ Nông Sản"
+keeper = ExtResource("k1")
+mode = 1
+color = Color(0.95, 0.45, 0.3, 1)
+
+[node name="Trees" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n0"), ExtResource("n1"), ExtResource("n2"), ExtResource("n3")])
+count = 45
+area = Vector2(64, 64)
+keep_out = Array[Rect2]([Rect2(-17, -18, 34, 34), Rect2(-19, 12, 38, 12)])
+scale_range = Vector2(2.2, 3.2)
+collision_radius = 0.45
+random_seed = 7
+
+[node name="Flowers" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n4"), ExtResource("n5"), ExtResource("n6"), ExtResource("n7"), ExtResource("n8"), ExtResource("n9")])
+count = 90
+keep_out = Array[Rect2]([Rect2(-11, -8, 22, 22), Rect2(-15, -17, 30, 9), Rect2(-19, 12, 38, 12)])
+area = Vector2(60, 40)
+random_seed = 3
+
+
+[node name="BusStop" parent="." instance=ExtResource("bus")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 15)

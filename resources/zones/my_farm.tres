@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"my_farm"
+display_name = "Nông Trại Của Tôi"
+description = "Ruộng, nhà và thú nuôi của bạn."
+scene_path = "res://scenes/zones/my_farm.tscn"
+unlock_level = 1
+ticket_price = 0
+order = 0

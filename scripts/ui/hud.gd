@@ -1,0 +1,359 @@
+class_name Hud
+extends CanvasLayer
+## Casual HUD: wallet + clock bar, tool quickbar, inventory panel (I/Tab), shop panel,
+## toast messages, the fishing timing bar, the race betting panel and the screen fader.
+
+signal timing_bar_done(hit: bool)
+
+var player: Player
+
+var _shop: ShopNpc
+var _race: PetRace
+var _modal := false ## a panel owns the input (GameState.ui_busy) until closed
+var _toast_tween: Tween
+var _bar_panel: PanelContainer
+var _bar: ColorRect ## the track the marker sweeps over
+var _bar_zone: ColorRect
+var _bar_marker: ColorRect
+var _bar_t := 0.0
+var _bar_speed := 1.0
+var _bar_time_left := 0.0
+var _level_label: Label
+var _xp_bar: ProgressBar
+var _banner: Label
+
+@onready var _coins: Label = %Coins
+@onready var _gems: Label = %Gems
+@onready var _clock: Label = %Clock
+@onready var _slots: HBoxContainer = %Slots
+@onready var _inventory_panel: Control = %InventoryPanel
+@onready var _grid: GridContainer = %Grid
+@onready var _shop_panel: Control = %ShopPanel
+@onready var _shop_title: Label = %ShopTitle
+@onready var _shop_list: VBoxContainer = %ShopList
+@onready var _toast: Label = %Toast
+@onready var _fader: ColorRect = %Fader
+
+
+func _ready() -> void:
+	add_to_group(&"hud")
+	GameState.money_changed.connect(_refresh_money)
+	GameState.toasted.connect(toast)
+	GameState.shop_requested.connect(open_shop)
+	GameState.race_requested.connect(open_race)
+	GameState.bus_requested.connect(open_bus)
+	Progression.xp_changed.connect(_refresh_level)
+	GameState.inventory.changed.connect(_on_inventory_changed)
+	%InventoryClose.pressed.connect(close_panels)
+	%ShopClose.pressed.connect(close_panels)
+	_build_timing_bar()
+	_build_level_and_banner()
+	_refresh_money()
+	_refresh_level()
+
+
+func bind(p: Player) -> void:
+	player = p
+	for i in Player.Tool.size():
+		var b := Button.new()
+		b.toggle_mode = true
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(110, 64)
+		b.pressed.connect(player.select_tool.bind(i))
+		_slots.add_child(b)
+	player.tool_changed.connect(_refresh_quickbar)
+	_refresh_quickbar()
+
+
+func _process(delta: float) -> void:
+	_clock.text = GameState.time_text()
+	if _bar_panel.visible:
+		_bar_t += delta * _bar_speed
+		_bar_marker.position.x = pingpong(_bar_t, 1.0) * (_bar.custom_minimum_size.x - _bar_marker.size.x)
+		_bar_time_left -= delta
+		if _bar_time_left <= 0.0:
+			_finish_bar(false)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _bar_panel.visible and event.is_action_pressed(&"interact"):
+		var x := _bar_marker.position.x + _bar_marker.size.x * 0.5
+		_finish_bar(x >= _bar_zone.position.x and x <= _bar_zone.position.x + _bar_zone.size.x)
+	elif event.is_action_pressed(&"ui_cancel"):
+		close_panels()
+	elif event.is_action_pressed(&"inventory") and not _shop_panel.visible:
+		_inventory_panel.visible = not _inventory_panel.visible
+		_refresh_inventory()
+	else:
+		return
+	get_viewport().set_input_as_handled()
+
+
+func open_shop(npc: ShopNpc) -> void:
+	_open_modal()
+	_shop = npc
+	_refresh_shop()
+
+
+func open_race(race: PetRace) -> void:
+	_open_modal()
+	_race = race
+	_clear(_shop_list)
+	_shop_title.text = "Đua Thú — chọn thú và đặt cược"
+	for i in race.racers.size():
+		var r: Dictionary = race.racers[i]
+		var row := HBoxContainer.new()
+		var label := _label("%s  —  thắng x%d" % [r.name, r.payout])
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		for bet in [10, 50]:
+			var b := Button.new()
+			b.text = "Cược %d" % bet
+			b.focus_mode = Control.FOCUS_NONE
+			b.pressed.connect(_place_bet.bind(i, bet))
+			row.add_child(b)
+		_shop_list.add_child(row)
+
+
+func open_bus(_stop: BusStop) -> void:
+	_open_modal()
+	_clear(_shop_list)
+	_shop_title.text = "Bảng Tuyến Xe Buýt"
+	for zone in Database.zones:
+		if zone.id == GameState.current_zone:
+			continue
+		var row := HBoxContainer.new()
+		var info := _label("%s
+%s" % [zone.display_name, zone.description])
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.add_theme_font_size_override(&"font_size", 14)
+		row.add_child(info)
+		if Progression.is_unlocked(zone):
+			var b := Button.new()
+			b.text = "Đi • %s" % ("Miễn phí" if zone.ticket_price == 0 else "%d xu" % zone.ticket_price)
+			b.focus_mode = Control.FOCUS_NONE
+			b.pressed.connect(_ride_bus.bind(zone))
+			row.add_child(b)
+		else:
+			row.add_child(_label("Cần cấp %d" % zone.unlock_level))
+			row.modulate.a = 0.55
+		_shop_list.add_child(row)
+
+
+func show_banner(text: String) -> void:
+	_banner.text = text
+
+
+func close_panels() -> void:
+	_inventory_panel.hide()
+	_shop_panel.hide()
+	_shop = null
+	_race = null
+	if _modal:
+		_modal = false
+		GameState.ui_busy = false
+
+
+## Fishing minigame: a marker sweeps the bar; press interact while it is inside the green zone.
+## zone_width is a 0..1 fraction of the bar. Returns true on a hit.
+func play_timing_bar(zone_width: float, speed: float, time_limit := 6.0) -> bool:
+	_bar_zone.size.x = _bar.custom_minimum_size.x * zone_width
+	_bar_zone.position.x = randf_range(0.0, _bar.custom_minimum_size.x - _bar_zone.size.x)
+	_bar_t = randf()
+	_bar_speed = speed
+	_bar_time_left = time_limit
+	_bar_panel.show()
+	return await timing_bar_done
+
+
+func _finish_bar(hit: bool) -> void:
+	_bar_panel.hide()
+	get_viewport().set_input_as_handled()
+	timing_bar_done.emit(hit)
+
+
+func _open_modal() -> void:
+	_inventory_panel.hide()
+	_shop_panel.show()
+	_modal = true
+	GameState.ui_busy = true
+
+
+func _ride_bus(zone: ZoneData) -> void:
+	if not GameState.spend(zone.ticket_price):
+		return
+	close_panels()
+	GameState.travel(zone.id)
+
+
+func _refresh_level() -> void:
+	_level_label.text = "Cấp %d" % Progression.level
+	_xp_bar.max_value = Progression.xp_to_next()
+	_xp_bar.value = Progression.xp
+	_xp_bar.tooltip_text = "%d / %d EXP" % [Progression.xp, Progression.xp_to_next()]
+
+
+func _build_level_and_banner() -> void:
+	var top := _coins.get_parent()
+	_level_label = _label("Cấp 1")
+	top.add_child(_level_label)
+	top.move_child(_level_label, 0)
+	_xp_bar = ProgressBar.new()
+	_xp_bar.custom_minimum_size = Vector2(110, 14)
+	_xp_bar.show_percentage = false
+	_xp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color(0.45, 0.8, 0.35)
+	fill.set_corner_radius_all(6)
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.85, 0.75, 0.6)
+	bg.set_corner_radius_all(6)
+	_xp_bar.add_theme_stylebox_override(&"fill", fill)
+	_xp_bar.add_theme_stylebox_override(&"background", bg)
+	top.add_child(_xp_bar)
+	top.move_child(_xp_bar, 1)
+	_banner = Label.new()
+	_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.add_theme_font_size_override(&"font_size", 34)
+	_banner.add_theme_color_override(&"font_color", Color.WHITE)
+	$Root.add_child(_banner)
+
+
+func _place_bet(index: int, bet: int) -> void:
+	var race := _race
+	if not GameState.spend(bet):
+		return
+	close_panels()
+	race.start_race(index, bet)
+
+
+func _build_timing_bar() -> void:
+	_bar_panel = PanelContainer.new()
+	_bar_panel.visible = false
+	_bar_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_bar_panel.offset_left = -240.0
+	_bar_panel.offset_right = 240.0
+	_bar_panel.offset_top = -210.0
+	_bar_panel.offset_bottom = -120.0
+	$Root.add_child(_bar_panel)
+	var box := VBoxContainer.new()
+	_bar_panel.add_child(box)
+	var title := _label("Bấm E khi kim nằm trong vùng xanh!")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	_bar = ColorRect.new()
+	_bar.color = Color(0.45, 0.3, 0.2)
+	_bar.custom_minimum_size = Vector2(440, 34)
+	box.add_child(_bar)
+	_bar_zone = ColorRect.new()
+	_bar_zone.color = Color(0.4, 0.85, 0.35)
+	_bar_zone.size = Vector2(100, 34)
+	_bar.add_child(_bar_zone)
+	_bar_marker = ColorRect.new()
+	_bar_marker.color = Color(1, 0.95, 0.4)
+	_bar_marker.size = Vector2(8, 34)
+	_bar.add_child(_bar_marker)
+
+
+
+func toast(text: String) -> void:
+	_toast.text = text
+	_toast.modulate.a = 1.0
+	if _toast_tween:
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(1.2)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.4)
+
+
+func fade(to_alpha: float, time := 0.35) -> void:
+	var tw := create_tween()
+	tw.tween_property(_fader, "color:a", to_alpha, time)
+	await tw.finished
+
+
+func _on_inventory_changed() -> void:
+	if player:
+		_refresh_quickbar()
+	if _inventory_panel.visible:
+		_refresh_inventory()
+	if _shop_panel.visible and _shop:
+		_refresh_shop()
+
+
+func _refresh_money() -> void:
+	_coins.text = "Xu: %d" % GameState.coins
+	_gems.text = "Lượng: %d" % GameState.gems
+
+
+func _refresh_quickbar() -> void:
+	for i in _slots.get_child_count():
+		var b: Button = _slots.get_child(i)
+		b.set_pressed_no_signal(i == player.tool)
+		b.text = "%d. %s" % [i + 1, player.tool_label(i)]
+		var s := player.current_seed() if i == Player.Tool.SEED else null
+		b.icon = s.get_icon() if s else null
+
+
+func _refresh_inventory() -> void:
+	_clear(_grid)
+	for item in GameState.inventory.items():
+		var b := Button.new()
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(76, 76)
+		b.icon = item.get_icon()
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+		b.text = "%s\nx%d" % [item.display_name, GameState.inventory.count(item)]
+		b.tooltip_text = "%s\nBán: %d xu" % [item.description, item.sell_price]
+		b.add_theme_font_size_override(&"font_size", 12)
+		_grid.add_child(b)
+	if _grid.get_child_count() == 0:
+		_grid.add_child(_label("Túi trống"))
+
+
+func _refresh_shop() -> void:
+	_clear(_shop_list)
+	_shop_title.text = _shop.title
+	if _shop.mode == ShopNpc.Mode.BUY:
+		for item in _shop.stock:
+			_shop_row(item, "%s  —  %d xu" % [item.display_name, item.buy_price], {"Mua 1": 1, "Mua 5": 5}, GameState.buy)
+	else:
+		for item in GameState.inventory.items():
+			var n := GameState.inventory.count(item)
+			if item.sell_price > 0:
+				_shop_row(item, "%s x%d  —  %d xu/cái" % [item.display_name, n, item.sell_price], {"Bán 1": 1, "Bán hết": n}, GameState.sell)
+	if _shop_list.get_child_count() == 0:
+		_shop_list.add_child(_label("Không có gì để bán"))
+
+
+func _shop_row(item: ItemData, text: String, buttons: Dictionary, action: Callable) -> void:
+	var row := HBoxContainer.new()
+	var icon := TextureRect.new()
+	icon.texture = item.get_icon()
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	row.add_child(icon)
+	var label := _label(text)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	for caption: String in buttons:
+		var b := Button.new()
+		b.text = caption
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(action.bind(item, buttons[caption]))
+		row.add_child(b)
+	_shop_list.add_child(row)
+
+
+func _label(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	return l
+
+
+func _clear(node: Node) -> void:
+	for c in node.get_children():
+		node.remove_child(c)
+		c.queue_free()

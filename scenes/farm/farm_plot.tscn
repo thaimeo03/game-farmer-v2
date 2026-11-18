@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/farm_plot.gd" id="1_plot"]
+[ext_resource type="PackedScene" path="res://assets/models/props/soil_raw.glb" id="raw"]
+[ext_resource type="PackedScene" path="res://assets/models/props/soil_tilled.glb" id="tilled"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_highlight"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.95, 0.3, 0.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_highlight"]
+material = SubResource("Mat_highlight")
+size = Vector3(1.1, 0.02, 1.1)
+
+[node name="FarmPlot" type="Node3D"]
+script = ExtResource("1_plot")
+
+[node name="SoilRaw" parent="." instance=ExtResource("raw")]
+
+[node name="SoilTilled" parent="." instance=ExtResource("tilled")]
+visible = false
+
+[node name="Crop" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+
+[node name="Highlight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+visible = false
+mesh = SubResource("BoxMesh_highlight")

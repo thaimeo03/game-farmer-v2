@@ -1,0 +1,81 @@
+[gd_scene format=3]
+
+[ext_resource type="Environment" path="res://resources/world_environment.tres" id="env"]
+[ext_resource type="Script" path="res://scripts/utils/terrain.gd" id="terrain"]
+[ext_resource type="Script" path="res://scripts/utils/scatter.gd" id="sc"]
+[ext_resource type="PackedScene" path="res://assets/models/props/mountains_ring.glb" id="mount"]
+[ext_resource type="PackedScene" path="res://scenes/zones/bus_stop.tscn" id="bus"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_palm.glb" id="n0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_palmBend.glb" id="n1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_palmTall.glb" id="n2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_palmDetailedTall.glb" id="n3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/grass_large.glb" id="n4"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/plant_bush.glb" id="n5"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_yellowA.glb" id="n6"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/rock_smallA.glb" id="n7"]
+[ext_resource type="PackedScene" path="res://scenes/minigames/fishing_pier.tscn" id="pier"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/detail-parasol-b.glb" id="parasol"]
+
+[node name="SunnyBeach" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, 35, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+script = ExtResource("terrain")
+flat_zones = Array[Rect2]([Rect2(-15, -8, 30, 26)])
+ponds = Array[Vector3]([Vector3(0, -44, 36)])
+sand_height = 0.9
+random_seed = 17
+
+[node name="Mountains" parent="." instance=ExtResource("mount")]
+
+[node name="Trees" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n0"), ExtResource("n1"), ExtResource("n2"), ExtResource("n3")])
+count = 55
+area = Vector2(70, 70)
+keep_out = Array[Rect2]([Rect2(-16, -40, 32, 60)])
+scale_range = Vector2(2.6, 3.6)
+collision_radius = 0.45
+random_seed = 21
+
+[node name="Flowers" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n4"), ExtResource("n5"), ExtResource("n6"), ExtResource("n7")])
+count = 90
+area = Vector2(70, 40)
+keep_out = Array[Rect2]([Rect2(-16, -30, 32, 50)])
+random_seed = 4
+
+[node name="BusStop" parent="." instance=ExtResource("bus")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11)
+
+[node name="FishingPier" parent="." instance=ExtResource("pier")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
+
+[node name="Welcome" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -2)
+billboard = 1
+modulate = Color(1, 0.95, 0.5, 1)
+outline_modulate = Color(0.05, 0.25, 0.4, 1)
+text = "BÃI BIỂN NẮNG VÀNG"
+font_size = 140
+outline_size = 28
+
+[node name="Parasol0" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -7, 0, -3)
+
+[node name="Parasol1" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, -10, 0, 1)
+
+[node name="Parasol2" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 7, 0, -2)
+
+[node name="Parasol3" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 10, 0, 2)

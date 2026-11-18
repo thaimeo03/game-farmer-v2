@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"bus_terminal"
+display_name = "Bến Xe Trung Tâm"
+description = "Nơi đổi tuyến đi mọi khu."
+scene_path = "res://scenes/zones/bus_terminal.tscn"
+unlock_level = 1
+ticket_price = 0
+order = 1

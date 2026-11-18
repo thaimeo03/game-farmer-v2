@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="Resource" path="res://resources/crops/pumpkin.tres" id="2_crop"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"seed_pumpkin"
+display_name = "Hạt bí ngô"
+category = 0
+color = Color(0.85, 0.75, 0.45, 1)
+buy_price = 20
+sell_price = 10
+crop = ExtResource("2_crop")

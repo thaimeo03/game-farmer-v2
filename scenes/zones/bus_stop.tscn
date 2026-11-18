@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/bus_stop.gd" id="1_stop"]
+[ext_resource type="PackedScene" path="res://assets/models/props/bus_stop.glb" id="2_shelter"]
+[ext_resource type="PackedScene" path="res://assets/models/props/bus.glb" id="3_bus"]
+
+[sub_resource type="SphereShape3D" id="Detect"]
+radius = 1.8
+
+[sub_resource type="BoxShape3D" id="ShelterWall"]
+size = Vector3(3.8, 2.5, 0.3)
+
+[sub_resource type="BoxShape3D" id="BusBody"]
+size = Vector3(7.3, 2.9, 2.5)
+
+[sub_resource type="StandardMaterial3D" id="Asphalt"]
+albedo_color = Color(0.32, 0.32, 0.36, 1)
+
+[sub_resource type="BoxMesh" id="Road"]
+material = SubResource("Asphalt")
+size = Vector3(36, 0.04, 3.6)
+
+[sub_resource type="StandardMaterial3D" id="Paint"]
+albedo_color = Color(1, 0.85, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="Line"]
+material = SubResource("Paint")
+size = Vector3(36, 0.045, 0.12)
+
+[node name="BusStop" type="Area3D"]
+script = ExtResource("1_stop")
+prompt_height = 4.1
+
+[node name="Detect" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.6)
+shape = SubResource("Detect")
+
+[node name="Shelter" parent="." instance=ExtResource("2_shelter")]
+
+[node name="Wall" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -0.57)
+shape = SubResource("ShelterWall")
+
+[node name="Road" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 3.4)
+mesh = SubResource("Road")
+
+[node name="Line" type="MeshInstance3D" parent="Road"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
+mesh = SubResource("Line")
+
+[node name="Bus" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 0, 3.4)
+
+[node name="Model" parent="Bus" instance=ExtResource("3_bus")]
+
+[node name="Body" type="StaticBody3D" parent="Bus"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Bus/Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+shape = SubResource("BusBody")
+
+[node name="Exit" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.1, 1.3)
+
+[node name="Sign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, -0.2)
+billboard = 1
+outline_modulate = Color(0.1, 0.2, 0.35, 1)
+text = "Trạm Xe Buýt"
+font_size = 56
+outline_size = 14

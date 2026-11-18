@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CropData" format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/crop_data.gd" id="1_crop"]
+[ext_resource type="Resource" path="res://resources/items/pumpkin.tres" id="2_produce"]
+[ext_resource type="PackedScene" path="res://assets/models/crops/crop_pumpkin_0.glb" id="s0"]
+[ext_resource type="PackedScene" path="res://assets/models/crops/crop_pumpkin_1.glb" id="s1"]
+[ext_resource type="PackedScene" path="res://assets/models/crops/crop_pumpkin_2.glb" id="s2"]
+[ext_resource type="PackedScene" path="res://assets/models/crops/crop_pumpkin_3.glb" id="s3"]
+
+[resource]
+script = ExtResource("1_crop")
+id = &"pumpkin"
+display_name = "Bí ngô"
+color = Color(0.95, 0.8, 0.15, 1)
+stage_durations = PackedFloat32Array(10, 10, 10)
+produce = ExtResource("2_produce")
+stage_scenes = Array[PackedScene]([ExtResource("s0"), ExtResource("s1"), ExtResource("s2"), ExtResource("s3")])

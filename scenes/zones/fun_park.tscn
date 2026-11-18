@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="Environment" path="res://resources/world_environment.tres" id="env"]
+[ext_resource type="Script" path="res://scripts/utils/terrain.gd" id="terrain"]
+[ext_resource type="Script" path="res://scripts/utils/scatter.gd" id="sc"]
+[ext_resource type="PackedScene" path="res://assets/models/props/mountains_ring.glb" id="mount"]
+[ext_resource type="PackedScene" path="res://scenes/zones/bus_stop.tscn" id="bus"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_default.glb" id="n0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_oak.glb" id="n1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_fat.glb" id="n2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_detailed.glb" id="n3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_redA.glb" id="n4"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_yellowA.glb" id="n5"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_purpleA.glb" id="n6"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/plant_bush.glb" id="n7"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/grass_large.glb" id="n8"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/grass.glb" id="n9"]
+[ext_resource type="PackedScene" path="res://scenes/minigames/pet_race.tscn" id="race"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/detail-parasol-a.glb" id="parasol"]
+
+[node name="FunPark" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, 35, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+script = ExtResource("terrain")
+flat_zones = Array[Rect2]([Rect2(-17, -26, 32, 48), Rect2(-2, -1, 42, 11)])
+paths = Array[Rect2]([Rect2(2, 5.5, 12, 3)])
+random_seed = 31
+
+[node name="Mountains" parent="." instance=ExtResource("mount")]
+
+[node name="Trees" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n0"), ExtResource("n1"), ExtResource("n2"), ExtResource("n3")])
+count = 55
+area = Vector2(70, 70)
+keep_out = Array[Rect2]([Rect2(-19, -28, 36, 52), Rect2(-4, -3, 46, 15)])
+scale_range = Vector2(2.2, 3.2)
+collision_radius = 0.45
+random_seed = 21
+
+[node name="Flowers" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n4"), ExtResource("n5"), ExtResource("n6"), ExtResource("n7"), ExtResource("n8"), ExtResource("n9")])
+count = 90
+area = Vector2(70, 60)
+keep_out = Array[Rect2]([Rect2(-18, -27, 34, 50), Rect2(-3, -2, 44, 13)])
+random_seed = 4
+
+[node name="BusStop" parent="." instance=ExtResource("bus")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 3)
+
+[node name="PetRace" parent="." instance=ExtResource("race")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 12)
+
+[node name="Welcome" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 7, -6)
+billboard = 1
+modulate = Color(1, 0.6, 0.8, 1)
+outline_modulate = Color(0.3, 0.05, 0.2, 1)
+text = "CÔNG VIÊN VUI VẺ"
+font_size = 140
+outline_size = 28
+
+[node name="Parasol0" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 6, 0, 0)
+
+[node name="Parasol1" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 10, 0, -3)
+
+[node name="Parasol2" parent="." instance=ExtResource("parasol")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 12, 0, 1.5)
