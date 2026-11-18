@@ -8,6 +8,7 @@ signal leveled_up(level: int)
 const XP := {
 	&"till": 1, &"plant": 2, &"water": 1, &"harvest": 6,
 	&"fish": 5, &"fish_rare": 15, &"race": 3,
+	&"weed": 1, &"spray": 1, &"fertilize": 1, &"collect": 3, &"craft": 4, &"order": 0, &"pond": 4,
 }
 
 var level := 1

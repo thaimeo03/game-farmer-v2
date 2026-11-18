@@ -56,7 +56,7 @@ theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 14
 text = "WASD: đi | Shift: chạy | E/Space/Click: tương tác
-1-4: công cụ (bấm 3 lần nữa để đổi hạt)
+1-5: công cụ (bấm 3 lần nữa để đổi hạt)
 I/Tab: túi đồ | Esc: đóng bảng
 Chuột phải: xoay camera | Lăn chuột: zoom"
 horizontal_alignment = 2

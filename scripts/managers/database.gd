@@ -5,11 +5,15 @@ extends Node
 var items := {} ## StringName -> ItemData
 var crops := {} ## StringName -> CropData
 var zones: Array[ZoneData] = [] ## sorted by ZoneData.order
+var animals := {} ## StringName -> AnimalData
+var recipes := {} ## StringName -> RecipeData
 
 
 func _init() -> void:
 	_scan("res://resources/items", items)
 	_scan("res://resources/crops", crops)
+	_scan("res://resources/animals", animals)
+	_scan("res://resources/recipes", recipes)
 	var found := {}
 	_scan("res://resources/zones", found)
 	for z: ZoneData in found.values():
@@ -23,6 +27,15 @@ func item(id: StringName) -> ItemData:
 
 func crop(id: StringName) -> CropData:
 	return crops.get(id)
+
+
+func recipes_for(machine: StringName) -> Array[RecipeData]:
+	var out: Array[RecipeData] = []
+	for r: RecipeData in recipes.values():
+		if r.machine == machine:
+			out.append(r)
+	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.unlock_level < b.unlock_level)
+	return out
 
 
 func zone(id: StringName) -> ZoneData:

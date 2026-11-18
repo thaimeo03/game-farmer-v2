@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"fertilizer"
+display_name = "Phân bón"
+description = "Bón cho cây (phím 5): rút ngắn một nửa thời gian lớn."
+category = 5
+color = Color(0.55, 0.42, 0.25, 1)
+buy_price = 8
+sell_price = 2

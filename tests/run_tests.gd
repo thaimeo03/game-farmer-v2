@@ -11,6 +11,7 @@ func _ready() -> void:
 	test_economy()
 	test_minigames()
 	await test_world()
+	await test_farm_plus()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -39,11 +40,17 @@ func test_farm() -> void:
 	plot._process(0.0)
 	_check(plot.stage == 0, "no growth while dry")
 	_check(plot.can(&"water"), "planted -> waterable")
-	plot.perform(&"water")
+	plot.problem_chance = 0.0
 	for d in crop.stage_durations:
 		_check(not plot.can(&"harvest"), "not harvestable before mature")
+		plot.perform(&"water")
 		GameState.clock += d
 		plot._process(0.0)
+		_check(not plot.is_watered, "soil dries after each stage")
+		GameState.clock += 100.0
+		var before := plot.stage
+		plot._process(0.0)
+		_check(plot.stage == before, "a dry stage does not grow")
 	_check(crop.stage_at(0.0) == 0 and crop.stage_at(1e6) == crop.stage_durations.size(), "stage_at bounds")
 	_check(crop.produce != null, "crop has produce item")
 	_check(plot.can(&"harvest"), "mature -> harvestable")
@@ -137,6 +144,7 @@ func test_world() -> void:
 	var plot := grid.get_plot(Vector2i(1, 1))
 	plot.perform(&"till")
 	plot.perform(&"plant", Database.crop(&"pumpkin"))
+	plot.problem_chance = 0.0
 	plot.perform(&"water")
 	GameState.coins = 321
 	GameState.current_zone = &"fun_park"
@@ -160,14 +168,118 @@ func test_world() -> void:
 	add_child(farm2)
 	await get_tree().process_frame
 	var plot2 := (farm2.get_node(^"FarmGrid") as FarmGrid).get_plot(Vector2i(1, 1))
-	_check(plot2.crop == Database.crop(&"pumpkin") and plot2.state == FarmPlot.State.HARVESTABLE, "planted pumpkin restored and grew offline")
-	_check(SaveManager.pending_farm.is_empty(), "pending farm data consumed")
+	_check(plot2.crop == Database.crop(&"pumpkin") and plot2.stage == 1 and not plot2.is_watered, "pumpkin restored, grew one stage offline, now dry")
+	_check(not SaveManager._pending.has("farm_grid"), "pending farm data consumed")
 	farm2.free()
 
 	# corrupt save is set aside, never crashes
 	FileAccess.open(SaveManager.path, FileAccess.WRITE).store_string("{not json")
 	_check(not SaveManager.load_game() and FileAccess.file_exists(SaveManager.path + ".bad"), "corrupt save kept as .bad")
 	DirAccess.remove_absolute(SaveManager.path + ".bad")
+
+
+func test_farm_plus() -> void:
+	var inv := GameState.inventory
+	var farm: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm)
+	await get_tree().process_frame
+	var grid: FarmGrid = farm.get_node(^"FarmGrid")
+
+	# crop care: weeds/pests pause growth, fertilizer halves stage time
+	var plot := grid.get_plot(Vector2i(0, 0))
+	plot.perform(&"till")
+	plot.perform(&"plant", Database.crop(&"carrot"))
+	plot.perform(&"fertilize")
+	_check(plot.fertilized and not plot.can(&"fertilize"), "fertilized once")
+	plot.problem_chance = 1.0
+	plot.perform(&"water")
+	GameState.clock += 2.0 # carrot stage = 4 s, fertilized = 2 s
+	plot._process(0.0)
+	_check(plot.stage == 1 and plot.problem != FarmPlot.Problem.NONE, "fertilized stage done in half time, problem appeared")
+	plot.perform(&"water")
+	GameState.clock += 50.0
+	plot._process(0.0)
+	_check(plot.stage == 1, "weeds/pests block growth even when watered")
+	var fix: StringName = &"weed" if plot.problem == FarmPlot.Problem.WEEDS else &"spray"
+	_check(plot.can(fix), "plot offers the right fix")
+	plot.perform(fix)
+	_check(plot.problem == FarmPlot.Problem.NONE, "problem removed")
+
+	# land expansion
+	var cols := grid.size.x
+	_check(grid.expand_cost() == 150 and grid.expand_level() == 2, "first expansion: 150 xu, level 2")
+	grid.expand()
+	_check(grid.size.x == cols + 1 and grid.get_plot(Vector2i(cols, 0)) != null, "expansion adds a column of plots")
+
+	# recipes + machine
+	var juicer: Machine = farm.get_node(^"Juicer")
+	var tomato := Database.item(&"tomato")
+	var juice: RecipeData = Database.recipes[&"tomato_juice"]
+	_check(Database.recipes_for(&"juicer").size() == 2, "juicer has 2 recipes")
+	inv.add(tomato, 3)
+	var before := inv.count(tomato)
+	_check(juicer.start(juice) and inv.count(tomato) == before - 3, "machine takes recipe inputs")
+	_check(not juicer.start(juice), "one job at a time")
+	_check(not juicer.is_done(), "job not done yet")
+	GameState.clock += juice.duration
+	var juice_before := inv.count(juice.output)
+	juicer.interact(null)
+	_check(inv.count(juice.output) == juice_before + 1 and juicer.job == null, "collect finished product")
+
+	# animals
+	var pen: AnimalPen = farm.get_node(^"AnimalPen")
+	inv.add(Database.item(&"chick"), 2)
+	pen.interact(null)
+	_check(pen.count() == 2 and inv.count(Database.item(&"chick")) == 0, "young animals released into the pen")
+	var hen := pen._animals.get_child(0) as Animal
+	inv.add(Database.item(&"animal_feed"), 1)
+	hen.interact(null)
+	_check(hen.fed_at >= 0.0, "animal fed with 1 feed")
+	GameState.clock += hen.data.produce_time
+	hen._process(0.0)
+	var eggs := inv.count(Database.item(&"egg"))
+	hen.interact(null)
+	_check(inv.count(Database.item(&"egg")) == eggs + 1 and not hen.has_product and hen.fed_at < 0.0, "egg collected, hen hungry again")
+
+	# home pond
+	var pond: FishPond = farm.get_node(^"HomePond")
+	inv.add(Database.item(&"fingerling"), 1)
+	pond.interact(null)
+	_check(pond.stocked_at >= 0.0 and not pond.is_grown(), "pond stocked")
+	GameState.clock += pond.grow_time
+	var fish_before: int = inv.items(ItemData.Category.FISH).reduce(func(n: int, it: ItemData) -> int: return n + inv.count(it), 0)
+	pond.interact(null)
+	var fish_after: int = inv.items(ItemData.Category.FISH).reduce(func(n: int, it: ItemData) -> int: return n + inv.count(it), 0)
+	_check(fish_after == fish_before + pond.catch_count and pond.stocked_at < 0.0, "netted fish from the pond")
+
+	# delivery orders
+	var board: OrderBoard = farm.get_node(^"OrderBoard")
+	_check(board.orders.size() == 3, "3 orders on the board")
+	var order: Dictionary = board.orders[0]
+	for id: String in order.items:
+		inv.add(Database.item(StringName(id)), int(order.items[id]))
+	var coins := GameState.coins
+	_check(board.can_fill(order) and board.deliver(0), "order delivered")
+	_check(GameState.coins == coins + int(order.coins), "order paid")
+	_check(float(board.orders[0].ready_at) > GameState.clock, "slot refills after a cooldown")
+
+	# everything survives a save/load
+	_check(SaveManager.save_game(), "farm extras saved")
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveManager.path))
+	_check(data.world.has("animal_pen") and data.world.has("machine_juicer") and data.world.has("order_board") and data.world.has("home_pond"), "all farm systems in the save")
+	_check(int(data.world.farm_grid.columns) == cols + 1, "expanded columns saved")
+	farm.free()
+	SaveManager.load_game()
+	var farm2: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm2)
+	await get_tree().process_frame
+	_check((farm2.get_node(^"FarmGrid") as FarmGrid).size.x == cols + 1, "expansion restored")
+	_check((farm2.get_node(^"AnimalPen") as AnimalPen).count() == 2, "animals restored")
+	farm2.free()
+
+	# v1 save (plots only) still loads
+	FileAccess.open(SaveManager.path, FileAccess.WRITE).store_string(JSON.stringify({"version": 1, "unix": 0, "farm": [{"cell": [0, 0], "state": 1}]}))
+	_check(SaveManager.load_game() and SaveManager._pending.farm_grid.plots.size() == 1, "v1 save migrated")
 
 
 func _check(ok: bool, msg: String) -> void:

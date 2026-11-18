@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"animal_feed"
+display_name = "Thức ăn gia súc"
+description = "Cho vật nuôi ăn để chúng ra sản phẩm."
+category = 5
+color = Color(0.9, 0.8, 0.45, 1)
+buy_price = 4
+sell_price = 1

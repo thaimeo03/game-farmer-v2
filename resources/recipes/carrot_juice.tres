@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/recipe_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="item"]
+[ext_resource type="Resource" path="res://resources/items/carrot_juice.tres" id="out"]
+[ext_resource type="Resource" path="res://resources/items/carrot.tres" id="in0"]
+
+[resource]
+script = ExtResource("1")
+id = &"carrot_juice"
+machine = &"juicer"
+input_items = Array[ExtResource("item")]([ExtResource("in0")])
+input_counts = PackedInt32Array(3)
+output = ExtResource("out")
+duration = 20.0
+unlock_level = 1

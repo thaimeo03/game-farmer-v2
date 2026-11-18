@@ -7,6 +7,15 @@
 [ext_resource type="Resource" path="res://resources/items/seed_tomato.tres" id="5_s2"]
 [ext_resource type="Resource" path="res://resources/items/seed_pumpkin.tres" id="6_s3"]
 [ext_resource type="Resource" path="res://resources/items/bait.tres" id="7_bait"]
+[ext_resource type="Resource" path="res://resources/items/chick.tres" id="sup0"]
+[ext_resource type="Resource" path="res://resources/items/calf.tres" id="sup1"]
+[ext_resource type="Resource" path="res://resources/items/piglet.tres" id="sup2"]
+[ext_resource type="Resource" path="res://resources/items/lamb.tres" id="sup3"]
+[ext_resource type="Resource" path="res://resources/items/animal_feed.tres" id="sup4"]
+[ext_resource type="Resource" path="res://resources/items/fertilizer.tres" id="sup5"]
+[ext_resource type="Resource" path="res://resources/items/pesticide.tres" id="sup6"]
+[ext_resource type="Resource" path="res://resources/items/fingerling.tres" id="sup7"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-d.glb" id="k_supply"]
 
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-a.glb" id="b0"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-skyscraper-a.glb" id="b1"]
@@ -160,3 +169,10 @@ random_seed = 3
 
 [node name="BusStop" parent="." instance=ExtResource("bus")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 15)
+
+[node name="FarmSupply" parent="." instance=ExtResource("1_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
+title = "Trại Giống & Vật Tư"
+stock = Array[ExtResource("3_item")]([ExtResource("sup0"), ExtResource("sup1"), ExtResource("sup2"), ExtResource("sup3"), ExtResource("sup4"), ExtResource("sup5"), ExtResource("sup6"), ExtResource("sup7")])
+color = Color(0.6, 0.4, 0.85, 1)
+keeper = ExtResource("k_supply")

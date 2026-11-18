@@ -8,16 +8,21 @@ extends CharacterBody3D
 
 signal tool_changed
 
-enum Tool { HOE, WATER, SEED, ROD }
+enum Tool { HOE, WATER, SEED, ROD, FERTILIZER }
 enum State { IDLE, WALK, RUN, ACTION }
 
-const TOOL_NAMES: Array[String] = ["Cuốc", "Bình tưới", "Hạt giống", "Cần câu"]
-const TOOL_ACTIONS: Array[StringName] = [&"till", &"water", &"plant", &"fish"]
+const TOOL_NAMES: Array[String] = ["Cuốc", "Bình tưới", "Hạt giống", "Cần câu", "Phân bón"]
+const TOOL_ACTIONS: Array[StringName] = [&"till", &"water", &"plant", &"fish", &"fertilize"]
+## Plot problems are handled first, whatever tool is held.
+const PRIORITY_ACTIONS: Array[StringName] = [&"harvest", &"weed", &"spray"]
+## Actions that use up an item (by Database id).
+const CONSUMES := {&"spray": &"pesticide", &"fertilize": &"fertilizer"}
 const STATE_ANIMS: Array[StringName] = [&"idle", &"walk", &"run", &""]
 ## Our state/action names -> clip names in the Kenney Mini Characters rig.
 const ANIM_ALIASES := {
 	&"run": &"sprint", &"till": &"attack-melee-right", &"water": &"interact-right",
 	&"plant": &"pick-up", &"harvest": &"pick-up", &"fish": &"holding-right",
+	&"fertilize": &"pick-up", &"weed": &"pick-up", &"spray": &"interact-right",
 }
 const LOOPING: Array[StringName] = [&"idle", &"walk", &"sprint"]
 const TOOL_MODELS: Array[PackedScene] = [
@@ -25,6 +30,7 @@ const TOOL_MODELS: Array[PackedScene] = [
 	preload("res://assets/models/props/tool_watering_can.glb"),
 	preload("res://assets/models/props/tool_seed_bag.glb"),
 	preload("res://assets/models/props/tool_fishing_rod.glb"),
+	preload("res://assets/models/props/tool_seed_bag.glb"),
 ]
 
 @export var walk_speed := 3.5
@@ -134,6 +140,8 @@ func current_seed() -> ItemData:
 
 
 func tool_label(t: int = tool) -> String:
+	if t == Tool.FERTILIZER:
+		return "%s x%d" % [TOOL_NAMES[t], GameState.inventory.count(Database.item(&"fertilizer"))]
 	if t != Tool.SEED:
 		return TOOL_NAMES[t]
 	var s := current_seed()
@@ -155,12 +163,22 @@ func try_interact() -> void:
 		return
 	if not is_instance_valid(_target):
 		return
-	var action := &"harvest" if _target.can(&"harvest") else TOOL_ACTIONS[tool]
-	var seed_item := current_seed()
-	if action == &"plant" and seed_item == null and _target.can(action):
-		GameState.toast("Hết hạt giống - mua thêm ở Thành Phố")
-		return
+	var action: StringName = TOOL_ACTIONS[tool]
+	for a in PRIORITY_ACTIONS:
+		if _target.can(a):
+			action = a
+			break
 	if not _target.can(action):
+		var hint := _target.status_text()
+		if hint:
+			GameState.toast(hint)
+		return
+	var seed_item := current_seed()
+	if action == &"plant" and seed_item == null:
+		GameState.toast("Hết hạt giống - mua ở Phố Chợ")
+		return
+	if CONSUMES.has(action) and GameState.inventory.count(Database.item(CONSUMES[action])) == 0:
+		GameState.toast("Hết %s - mua ở Phố Chợ" % Database.item(CONSUMES[action]).display_name)
 		return
 	var plot := _target
 	_set_state(State.ACTION)
@@ -199,6 +217,8 @@ func equip(slot: StringName, mesh: Mesh, material: Material = null) -> void:
 
 func _finish_action(plot: FarmPlot, action: StringName, seed_item: ItemData) -> void:
 	if not is_instance_valid(plot) or not plot.can(action):
+		return
+	if CONSUMES.has(action) and not GameState.inventory.remove(Database.item(CONSUMES[action])):
 		return
 	if action != &"plant" or GameState.inventory.count(seed_item) > 0:
 		Progression.reward(action)

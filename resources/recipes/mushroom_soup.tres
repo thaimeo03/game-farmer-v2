@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/recipe_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="item"]
+[ext_resource type="Resource" path="res://resources/items/mushroom_soup.tres" id="out"]
+[ext_resource type="Resource" path="res://resources/items/truffle.tres" id="in0"]
+[ext_resource type="Resource" path="res://resources/items/milk.tres" id="in1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mushroom_soup"
+machine = &"stove"
+input_items = Array[ExtResource("item")]([ExtResource("in0"), ExtResource("in1")])
+input_counts = PackedInt32Array(1, 1)
+output = ExtResource("out")
+duration = 45.0
+unlock_level = 3

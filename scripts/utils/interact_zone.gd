@@ -35,6 +35,16 @@ func interact(player: Player) -> void:
 	interacted.emit(player)
 
 
+func set_prompt(text: String) -> void:
+	prompt_text = text
+	if _prompt:
+		_prompt.text = text
+
+
+func hud() -> Hud:
+	return get_tree().get_first_node_in_group(&"hud") as Hud
+
+
 func _on_body(body: Node3D, entered: bool) -> void:
 	if body is Player:
 		_prompt.visible = entered

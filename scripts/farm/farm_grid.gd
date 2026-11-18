@@ -1,86 +1,35 @@
 class_name FarmGrid
 extends Node3D
-## Spawns a size.x * size.y grid of FarmPlots starting at this node's origin (+X, +Z)
-## and maps world positions to plots. Registers itself in group "farm_grid".
+## Grid of FarmPlots starting at this node's origin (+X, +Z), fenced, with a sign that sells
+## extra columns of land. Maps world positions to plots. Registers itself in group
+## "farm_grid" and with SaveManager under "farm_grid".
 
 signal crop_harvested(plot: FarmPlot, crop: CropData)
+
+const SIGN := preload("res://assets/models/kenney/nature/sign.glb")
 
 @export var plot_scene: PackedScene = preload("res://scenes/farm/farm_plot.tscn")
 @export var size := Vector2i(6, 4)
 @export var cell_size := 1.2
-## Optional fence piece (Kenney nature fence: 1 unit long, sits on the tile's -Z edge).
-## A fence ring is built around the field with a gate gap in the middle of the +Z side.
-@export var fence_scene: PackedScene
+@export var fence_scene: PackedScene ## optional fence ring with a gate on the +Z side
+@export var max_columns := 10
+@export var land_cost := 150 ## price of the 7th column; each further column costs this much more
 
 var _plots := {} # Vector2i -> FarmPlot
+var _fence: Node3D
+var _sign: InteractZone
 
 
 func _ready() -> void:
 	add_to_group(&"farm_grid")
-	if fence_scene:
-		_build_fence()
 	for x in size.x:
 		for y in size.y:
-			var plot: FarmPlot = plot_scene.instantiate()
-			plot.cell = Vector2i(x, y)
-			plot.position = Vector3((x + 0.5) * cell_size, 0.0, (y + 0.5) * cell_size)
-			add_child(plot)
-			plot.harvested.connect(func(crop: CropData) -> void: crop_harvested.emit(plot, crop))
-			_plots[plot.cell] = plot
-	SaveManager.farm = self
-	if not SaveManager.pending_farm.is_empty():
-		load_save(SaveManager.pending_farm)
-		SaveManager.pending_farm = []
-
-
-func _build_fence() -> void:
-	var m := cell_size * 0.5 # margin between field and fence
-	var w := size.x * cell_size + 2.0 * m
-	var d := size.y * cell_size + 2.0 * m
-	var nx := roundi(w / cell_size)
-	var nz := roundi(d / cell_size)
-	# [start corner, direction, segment count, segment length, skip index] per side, clockwise
-	var sides := [
-		[Vector3(-m, 0, -m), Vector3.RIGHT, nx, w / nx, -1],
-		[Vector3(w - m, 0, -m), Vector3.BACK, nz, d / nz, -1],
-		[Vector3(w - m, 0, d - m), Vector3.LEFT, nx, w / nx, floori(nx / 2.0)], # gate gap facing the spawn
-		[Vector3(-m, 0, d - m), Vector3.FORWARD, nz, d / nz, -1],
-	]
-	for side in sides:
-		var dir: Vector3 = side[1]
-		var seg_len: float = side[3]
-		for i in side[2]:
-			if i == side[4]:
-				continue
-			var holder := StaticBody3D.new()
-			holder.position = side[0] + dir * seg_len * (i + 0.5)
-			holder.rotation.y = atan2(-dir.z, dir.x) # local +X along the side
-			var piece: Node3D = fence_scene.instantiate()
-			piece.scale = Vector3.ONE * seg_len
-			piece.position.z = 0.5 * seg_len # model's fence sits on its -Z edge
-			holder.add_child(piece)
-			var shape := CollisionShape3D.new()
-			shape.shape = BoxShape3D.new()
-			shape.shape.size = Vector3(seg_len, 0.8, 0.15)
-			shape.position.y = 0.4
-			holder.add_child(shape)
-			add_child(holder)
-
-
-## Only plots that differ from fresh grass are stored.
-func to_save() -> Array:
-	var out := []
-	for plot: FarmPlot in _plots.values():
-		if plot.state != FarmPlot.State.NORMAL:
-			out.append(plot.to_save())
-	return out
-
-
-func load_save(data: Array) -> void:
-	for d: Dictionary in data:
-		var plot := get_plot(Vector2i(int(d.cell[0]), int(d.cell[1])))
-		if plot:
-			plot.from_save(d)
+			_add_plot(Vector2i(x, y))
+	_rebuild_fence()
+	_build_sign()
+	var saved = SaveManager.register(&"farm_grid", self)
+	if saved:
+		load_save(saved)
 
 
 func world_to_cell(world_pos: Vector3) -> Vector2i:
@@ -94,3 +43,98 @@ func get_plot(cell: Vector2i) -> FarmPlot:
 
 func get_plot_at(world_pos: Vector3) -> FarmPlot:
 	return get_plot(world_to_cell(world_pos))
+
+
+func expand_cost() -> int:
+	return land_cost * (size.x - 5)
+
+
+func expand_level() -> int:
+	return size.x - 4
+
+
+## Adds one column of plots on the +X side.
+func expand() -> void:
+	if size.x >= max_columns:
+		return
+	for y in size.y:
+		_add_plot(Vector2i(size.x, y))
+	size.x += 1
+	_rebuild_fence()
+	_place_sign()
+
+
+func to_save() -> Dictionary:
+	var plots := []
+	for plot: FarmPlot in _plots.values():
+		if plot.state != FarmPlot.State.NORMAL:
+			plots.append(plot.to_save())
+	return {"columns": size.x, "plots": plots}
+
+
+func load_save(data: Dictionary) -> void:
+	while size.x < mini(int(data.get("columns", size.x)), max_columns):
+		expand()
+	for d: Dictionary in data.get("plots", []):
+		var plot := get_plot(Vector2i(int(d.cell[0]), int(d.cell[1])))
+		if plot:
+			plot.from_save(d)
+
+
+func _add_plot(cell: Vector2i) -> void:
+	var plot: FarmPlot = plot_scene.instantiate()
+	plot.cell = cell
+	plot.position = Vector3((cell.x + 0.5) * cell_size, 0.0, (cell.y + 0.5) * cell_size)
+	add_child(plot)
+	plot.harvested.connect(func(crop: CropData) -> void: crop_harvested.emit(plot, crop))
+	_plots[cell] = plot
+
+
+func _rebuild_fence() -> void:
+	if _fence:
+		_fence.queue_free()
+		_fence = null
+	if fence_scene:
+		var m := cell_size * 0.5
+		_fence = Fence.build(self, Vector3(-m, 0, -m), size.x * cell_size + 2.0 * m,
+			size.y * cell_size + 2.0 * m, cell_size, fence_scene)
+
+
+func _build_sign() -> void:
+	_sign = InteractZone.new()
+	_sign.prompt_text = "[E] Mở rộng đất"
+	var shape := CollisionShape3D.new()
+	shape.shape = SphereShape3D.new()
+	shape.shape.radius = 1.3
+	shape.position.y = 0.8
+	_sign.add_child(shape)
+	var model: Node3D = SIGN.instantiate()
+	model.scale = Vector3.ONE * 2.5
+	model.rotation.y = -PI * 0.5
+	_sign.add_child(model)
+	add_child(_sign)
+	_sign.interacted.connect(_on_sign)
+	_place_sign()
+
+
+func _place_sign() -> void:
+	_sign.position = Vector3(size.x * cell_size + 1.6, 0.0, size.y * cell_size * 0.5)
+	_sign.visible = size.x < max_columns
+	_sign.set_prompt("[E] Mở rộng đất" if size.x < max_columns else "Đã mở rộng tối đa")
+
+
+func _on_sign(_player: Player) -> void:
+	if size.x >= max_columns:
+		GameState.toast("Ruộng đã rộng tối đa")
+		return
+	var cost := expand_cost()
+	var lvl := expand_level()
+	var ok := Progression.level >= lvl and GameState.coins >= cost
+	var buy := func() -> void:
+		if Progression.level >= lvl and GameState.spend(cost):
+			expand()
+			GameState.toast("Ruộng đã rộng thêm!")
+	_sign.hud().open_menu("Mở rộng đất", [{
+		"text": "Thêm 1 cột (%d ô)\nGiá %d xu — cần cấp %d" % [size.y, cost, lvl],
+		"buttons": [["Mua", buy, ok]],
+	}])

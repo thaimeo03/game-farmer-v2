@@ -140,6 +140,33 @@ func open_bus(_stop: BusStop) -> void:
 		_shop_list.add_child(row)
 
 
+## Generic modal list. rows: [{"text": String, "buttons": [[caption, Callable, enabled], ...]}].
+## A button closes the menu, then runs its Callable (which may reopen a menu).
+func open_menu(title: String, rows: Array) -> void:
+	_open_modal()
+	_clear(_shop_list)
+	_shop_title.text = title
+	for r: Dictionary in rows:
+		var row := HBoxContainer.new()
+		var info := _label(r.text)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_child(info)
+		for spec: Array in r.get("buttons", []):
+			var b := Button.new()
+			b.text = spec[0]
+			b.disabled = not spec[2]
+			b.focus_mode = Control.FOCUS_NONE
+			var action: Callable = spec[1]
+			b.pressed.connect(func() -> void:
+				close_panels()
+				action.call())
+			row.add_child(b)
+		_shop_list.add_child(row)
+	if rows.is_empty():
+		_shop_list.add_child(_label("Không có gì ở đây."))
+
+
 func show_banner(text: String) -> void:
 	_banner.text = text
 

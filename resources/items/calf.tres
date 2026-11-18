@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"calf"
+display_name = "Bê con"
+description = "Thả vào chuồng. Ra sữa."
+category = 6
+color = Color(0.95, 0.95, 0.95, 1)
+buy_price = 120
+sell_price = 0
