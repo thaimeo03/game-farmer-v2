@@ -25,6 +25,12 @@ var _info: Label
 var _decor_panel: PanelContainer
 var _decor_list: VBoxContainer
 var _house: House
+var _preview_panel: PanelContainer
+var _preview_list: VBoxContainer
+var _preview_title: Label
+var _preview_root: Node3D
+var _preview_builder: Callable
+var admin: AdminPanel
 
 @onready var _coins: Label = %Coins
 @onready var _gems: Label = %Gems
@@ -53,6 +59,10 @@ func _ready() -> void:
 	_build_timing_bar()
 	_build_level_and_banner()
 	_build_decorate_panel()
+	_build_preview_panel()
+	admin = AdminPanel.new()
+	admin.hud = self
+	add_child(admin)
 	_refresh_money()
 	_refresh_level()
 
@@ -72,6 +82,8 @@ func bind(p: Player) -> void:
 
 func _process(delta: float) -> void:
 	_clock.text = GameState.time_text()
+	if _preview_panel.visible:
+		_preview_root.rotate_y(delta * 0.8)
 	if _bar_panel.visible:
 		_bar_t += delta * _bar_speed
 		_bar_marker.position.x = pingpong(_bar_t, 1.0) * (_bar.custom_minimum_size.x - _bar_marker.size.x)
@@ -81,11 +93,17 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"admin"):
+		admin.toggle()
+		get_viewport().set_input_as_handled()
+		return
 	if _bar_panel.visible and event.is_action_pressed(&"interact"):
 		var x := _bar_marker.position.x + _bar_marker.size.x * 0.5
 		_finish_bar(x >= _bar_zone.position.x and x <= _bar_zone.position.x + _bar_zone.size.x)
 	elif event.is_action_pressed(&"ui_cancel"):
 		close_panels()
+	elif event.is_action_pressed(&"wardrobe") and not GameState.ui_busy and player:
+		open_wardrobe()
 	elif event.is_action_pressed(&"inventory") and not _shop_panel.visible:
 		_inventory_panel.visible = not _inventory_panel.visible
 		_refresh_inventory()
@@ -101,6 +119,8 @@ func open_shop(npc: ShopNpc) -> void:
 
 
 func open_race(race: PetRace) -> void:
+	var pet: PetData = player.active_pet if player else null
+	race.set_guest(pet, player.pet_affection.get(String(pet.id), 0) if pet else 0)
 	_open_modal()
 	_race = race
 	_clear(_shop_list)
@@ -172,6 +192,54 @@ func open_menu(title: String, rows: Array) -> void:
 		_shop_list.add_child(_label("Không có gì ở đây."))
 
 
+## Shop with a rotating 3D fitting-room preview. builder() returns open_menu-style rows;
+## after any button the rows are rebuilt (the panel stays open).
+func open_preview_shop(title: String, builder: Callable, who: Player) -> void:
+	_open_modal(_preview_panel)
+	_preview_title.text = title
+	_preview_builder = builder
+	set_preview(who.base_id, who.equipped)
+	_refresh_preview_shop()
+
+
+func set_preview(base_id: String, equipped: Dictionary) -> void:
+	for c in _preview_root.get_children():
+		c.queue_free()
+	var model := Avatar.make_model(base_id)
+	_preview_root.add_child(model)
+	Avatar.dress(model, equipped)
+	var ap := model.find_children("*", "AnimationPlayer", true, false).pop_front() as AnimationPlayer
+	if ap and ap.has_animation(&"idle"):
+		ap.get_animation(&"idle").loop_mode = Animation.LOOP_LINEAR
+		ap.play(&"idle")
+
+
+## Wardrobe (O): worn / owned accessories, owned pets, and the active pet's care.
+func open_wardrobe() -> void:
+	var rows := [{"text": "%s  (đổi ở Tiệm Làm Đẹp)" % Avatar.base_name(player.base_id)}]
+	for o: OutfitData in Database.outfits.values():
+		if GameState.inventory.count(o.item) == 0:
+			continue
+		var worn: bool = player.equipped.get(o.slot) == o
+		rows.append({"text": "%s  [%s]%s" % [o.item.display_name, OutfitData.SLOT_NAMES[o.slot], "  - đang mặc" if worn else ""],
+			"buttons": [["Bỏ", player.unequip.bind(o.slot), true]] if worn else [["Mặc", player.equip_outfit.bind(o), true]]})
+	for pet: PetData in Database.pets.values():
+		if GameState.inventory.count(pet.item) == 0:
+			continue
+		var active := player.active_pet == pet
+		rows.append({"text": "Thú cưng: %s%s" % [pet.display_name, "  - đang dắt" if active else ""],
+			"buttons": [["Cất", player.set_active_pet.bind(null), true]] if active else [["Dắt theo", player.set_active_pet.bind(pet), true]]})
+	if player.active_pet:
+		rows.append_array(player.pet_companion().menu_rows(player))
+	for r: Dictionary in rows: # reopen the wardrobe after each action
+		for spec: Array in r.get("buttons", []):
+			var action: Callable = spec[1]
+			spec[1] = func() -> void:
+				action.call()
+				open_wardrobe()
+	open_menu("Tủ Đồ (O)", rows)
+
+
 ## Small line under the top bar (e.g. house beauty score). Empty hides it.
 func show_info(text: String) -> void:
 	_info.text = text
@@ -196,6 +264,7 @@ func show_banner(text: String) -> void:
 func close_panels() -> void:
 	_inventory_panel.hide()
 	_shop_panel.hide()
+	_preview_panel.hide()
 	_shop = null
 	_race = null
 	if _modal:
@@ -221,9 +290,9 @@ func _finish_bar(hit: bool) -> void:
 	timing_bar_done.emit(hit)
 
 
-func _open_modal() -> void:
+func _open_modal(panel: Control = null) -> void:
 	_inventory_panel.hide()
-	_shop_panel.show()
+	(panel if panel else _shop_panel).show()
 	_modal = true
 	GameState.ui_busy = true
 
@@ -464,3 +533,84 @@ func _refresh_decorate() -> void:
 	if _decor_list.get_child_count() == 0:
 		_decor_list.add_child(_label("Túi chưa có nội thất.
 Mua ở Phố Chợ."))
+
+
+func _refresh_preview_shop() -> void:
+	_clear(_preview_list)
+	for r: Dictionary in _preview_builder.call():
+		var row := HBoxContainer.new()
+		var info := _label(r.text)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.add_theme_font_size_override(&"font_size", 14)
+		row.add_child(info)
+		for spec: Array in r.get("buttons", []):
+			var b := Button.new()
+			b.text = spec[0]
+			b.disabled = not spec[2]
+			b.focus_mode = Control.FOCUS_NONE
+			var action: Callable = spec[1]
+			var is_try: bool = spec[0] == "Thử"
+			b.pressed.connect(func() -> void:
+				action.call()
+				if not is_try:
+					_refresh_preview_shop()
+					set_preview(player.base_id, player.equipped))
+			row.add_child(b)
+		_preview_list.add_child(row)
+
+
+func _build_preview_panel() -> void:
+	_preview_panel = PanelContainer.new()
+	_preview_panel.visible = false
+	_preview_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_preview_panel.offset_left = -380.0
+	_preview_panel.offset_right = 380.0
+	_preview_panel.offset_top = -230.0
+	_preview_panel.offset_bottom = 230.0
+	$Root.add_child(_preview_panel)
+	var outer := VBoxContainer.new()
+	_preview_panel.add_child(outer)
+	_preview_title = _label("")
+	_preview_title.add_theme_font_size_override(&"font_size", 22)
+	_preview_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	outer.add_child(_preview_title)
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(body)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(420, 360)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body.add_child(scroll)
+	_preview_list = VBoxContainer.new()
+	_preview_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_preview_list)
+	# fitting room: its own 3D world inside a SubViewport
+	var frame := SubViewportContainer.new()
+	frame.stretch = true
+	frame.custom_minimum_size = Vector2(280, 360)
+	body.add_child(frame)
+	var vp := SubViewport.new()
+	vp.own_world_3d = true
+	vp.transparent_bg = true
+	frame.add_child(vp)
+	var env := WorldEnvironment.new()
+	env.environment = Environment.new()
+	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.environment.ambient_light_color = Color.WHITE
+	env.environment.ambient_light_energy = 0.7
+	vp.add_child(env)
+	var light := DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-30, 25, 0)
+	vp.add_child(light)
+	var cam := Camera3D.new()
+	cam.fov = 38.0
+	vp.add_child(cam)
+	cam.look_at_from_position(Vector3(0, 1.1, 3.9), Vector3(0, 0.85, 0))
+	_preview_root = Node3D.new()
+	vp.add_child(_preview_root)
+	var close := Button.new()
+	close.text = "Đóng"
+	close.focus_mode = Control.FOCUS_NONE
+	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close.pressed.connect(close_panels)
+	outer.add_child(close)

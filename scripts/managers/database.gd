@@ -8,6 +8,8 @@ var zones: Array[ZoneData] = [] ## sorted by ZoneData.order
 var animals := {} ## StringName -> AnimalData
 var recipes := {} ## StringName -> RecipeData
 var furniture := {} ## StringName -> FurnitureData (same id as its ItemData)
+var outfits := {} ## StringName -> OutfitData (same id as its ItemData)
+var pets := {} ## StringName -> PetData (same id as its ItemData)
 
 
 func _init() -> void:
@@ -16,6 +18,8 @@ func _init() -> void:
 	_scan("res://resources/animals", animals)
 	_scan("res://resources/recipes", recipes)
 	_scan("res://resources/furniture", furniture)
+	_scan("res://resources/outfits", outfits)
+	_scan("res://resources/pets", pets)
 	var found := {}
 	_scan("res://resources/zones", found)
 	for z: ZoneData in found.values():

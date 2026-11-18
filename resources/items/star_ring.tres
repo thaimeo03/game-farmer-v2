@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/star_ring.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"star_ring"
+display_name = "Vòng sao"
+description = "Phụ kiện thời trang. Giá 60 Lượng."
+category = 4
+color = Color(1, 0.82, 0.25, 1)
+buy_price = 0
+sell_price = 0
+model = ExtResource("2_model")

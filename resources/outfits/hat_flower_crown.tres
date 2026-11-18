@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="OutfitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/items/hat_flower_crown.tres" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/hat_flower_crown.glb" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"hat_flower_crown"
+item = ExtResource("2")
+model = ExtResource("3")
+slot = 0
+gem_price = 0
+unlock_level = 1

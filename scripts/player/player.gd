@@ -49,28 +49,118 @@ var seed_index := 0
 ## Set by NPCs / spots while the player stands in their area; must have interact(player).
 var interactable: Node
 
+## Appearance (saved under "appearance"): base character, worn accessories, pets.
+var base_id := "character-female-b"
+var owned_bases: Array[String] = ["character-female-b"]
+var equipped := {} ## OutfitData.Slot -> OutfitData
+var pet_affection := {} ## pet id (String) -> int
+var active_pet: PetData
+
 var _target: FarmPlot
 var _sitting: Furniture
+var _pet: PetCompanion
 var _hand: BoneAttachment3D
 var _held: Node3D
 var _bob_t := 0.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var visual: Node3D = $Visual
-@onready var anim: AnimationPlayer = visual.find_children("*", "AnimationPlayer", true, false).pop_front()
+var anim: AnimationPlayer
 @onready var cam: CameraRig = $CameraRig
 
 
 func _ready() -> void:
+	_pet = PetCompanion.new()
+	_pet.owner_player = self
+	add_child(_pet)
+	var saved = SaveManager.register(&"appearance", self)
+	if saved:
+		load_save(saved)
+	else:
+		_setup_model()
+
+
+# ---------------------------------------------------------------- appearance
+
+func set_base(id: String) -> void:
+	base_id = id
+	_setup_model()
+
+
+func equip_outfit(outfit: OutfitData) -> void:
+	equipped[outfit.slot] = outfit
+	Avatar.dress(visual.get_node(^"Model"), equipped)
+
+
+func unequip(slot: int) -> void:
+	equipped.erase(slot)
+	Avatar.dress(visual.get_node(^"Model"), equipped)
+
+
+func set_active_pet(pet: PetData) -> void:
+	active_pet = pet
+	_pet.set_pet(pet)
+
+
+func pet_companion() -> PetCompanion:
+	return _pet
+
+
+func pet_level() -> int:
+	return active_pet.level_for(pet_affection.get(String(active_pet.id), 0)) if active_pet else 0
+
+
+func add_affection(amount: int) -> void:
+	if active_pet:
+		var key := String(active_pet.id)
+		pet_affection[key] = pet_affection.get(key, 0) + amount
+
+
+func to_save() -> Dictionary:
+	var worn := {}
+	for slot: int in equipped:
+		worn[str(slot)] = String(equipped[slot].id)
+	return {"base": base_id, "owned_bases": owned_bases, "equipped": worn, "pet_affection": pet_affection,
+		"active_pet": String(active_pet.id) if active_pet else ""}
+
+
+func load_save(d: Dictionary) -> void:
+	base_id = String(d.get("base", base_id))
+	owned_bases.assign(d.get("owned_bases", owned_bases))
+	equipped.clear()
+	var worn: Dictionary = d.get("equipped", {})
+	for slot: String in worn:
+		var o: OutfitData = Database.outfits.get(StringName(worn[slot]))
+		if o:
+			equipped[o.slot] = o
+	pet_affection = d.get("pet_affection", {})
+	_setup_model()
+	var pet: PetData = Database.pets.get(StringName(d.get("active_pet", "")))
+	if pet and GameState.inventory.count(pet.item) > 0:
+		set_active_pet(pet)
+
+
+## Rebuilds $Visual/Model from base_id, re-wires animations, the held tool and accessories.
+func _setup_model() -> void:
+	var old := visual.get_node_or_null(^"Model")
+	if old:
+		visual.remove_child(old)
+		old.queue_free()
+	var model := Avatar.make_model(base_id)
+	visual.add_child(model)
+	anim = model.find_children("*", "AnimationPlayer", true, false).pop_front()
 	if anim:
 		for clip in LOOPING:
 			if anim.has_animation(clip):
 				anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
-	var skel := visual.find_children("*", "Skeleton3D", true, false).pop_front() as Skeleton3D
+	_hand = null
+	_held = null
+	var skel := model.find_children("*", "Skeleton3D", true, false).pop_front() as Skeleton3D
 	if skel and skel.find_bone(hand_bone) >= 0:
 		_hand = BoneAttachment3D.new()
 		_hand.bone_name = hand_bone
 		skel.add_child(_hand)
+	Avatar.dress(model, equipped)
 	_play(&"idle")
 	_show_tool()
 
@@ -161,6 +251,8 @@ func teleport(pos: Vector3) -> void:
 	global_position = pos
 	velocity = Vector3.ZERO
 	cam.snap()
+	if _pet:
+		_pet.snap_to_owner()
 	interactable = null
 
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"pet_cat"
+display_name = "Mèo"
+description = "Thú cưng đi theo bạn. Chọn dắt theo trong Tủ đồ (phím O)."
+category = 9
+color = Color(0.95, 0.75, 0.5, 1)
+buy_price = 150
+sell_price = 0

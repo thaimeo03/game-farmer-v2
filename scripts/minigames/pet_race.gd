@@ -44,23 +44,43 @@ func _ready() -> void:
 	_build_track()
 	for i in RACERS.size():
 		var r: Dictionary = RACERS[i].duplicate()
-		var pet: Node3D = load(r.model).instantiate()
-		pet.scale = Vector3.ONE * pet_scale
-		pet.rotation.y = PI # Kenney pets face +Z, the race runs to -Z
-		add_child(pet)
 		var label := Label3D.new()
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.font_size = 80
 		label.outline_size = 18
 		add_child(label)
-		r.merge({"node": pet, "label": label, "anim": pet.find_children("*", "AnimationPlayer", true, false).pop_front(),
-			"x": (i - (RACERS.size() - 1) * 0.5) * lane_width})
-		for clip in [&"idle", &"run"]:
-			if r.anim and r.anim.has_animation(clip):
-				r.anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+		r.merge({"label": label, "x": (i - (RACERS.size() - 1) * 0.5) * lane_width})
+		_set_racer_model(r, r.model)
 		racers.append(r)
 	_reset()
 	_cam.look_at(to_global(Vector3(0, 0, -track_length * 0.55)))
+
+
+## Puts the player's pet in the last lane (or restores the house racer when pet is null).
+func set_guest(pet: PetData, affection := 0) -> void:
+	var r := racers[racers.size() - 1]
+	var base: Dictionary = RACERS[RACERS.size() - 1]
+	r.name = "%s (của bạn)" % pet.display_name if pet else base.name
+	r.speed = pet.race_speed(affection) if pet else base.speed
+	r.payout = 3 if pet else base.payout
+	_set_racer_model(r, pet.model.resource_path if pet else base.model)
+	_reset()
+
+
+func _set_racer_model(r: Dictionary, path: String) -> void:
+	if r.get("model_path") == path:
+		return
+	if r.has("node"):
+		r.node.queue_free()
+	var node: Node3D = load(path).instantiate()
+	node.scale = Vector3.ONE * pet_scale
+	node.rotation.y = PI # Kenney pets face +Z, the race runs to -Z
+	add_child(node)
+	var anim := node.find_children("*", "AnimationPlayer", true, false).pop_front() as AnimationPlayer
+	for clip in [&"idle", &"run"]:
+		if anim and anim.has_animation(clip):
+			anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+	r.merge({"node": node, "anim": anim, "model_path": path}, true)
 
 
 func start_race(pick: int, bet: int) -> void:

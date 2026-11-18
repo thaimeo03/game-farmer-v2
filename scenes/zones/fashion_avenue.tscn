@@ -1,0 +1,237 @@
+[gd_scene format=3]
+
+[ext_resource type="Environment" path="res://resources/world_environment.tres" id="env"]
+[ext_resource type="Script" path="res://scripts/utils/terrain.gd" id="terrain"]
+[ext_resource type="Script" path="res://scripts/utils/scatter.gd" id="sc"]
+[ext_resource type="PackedScene" path="res://assets/models/props/mountains_ring.glb" id="mount"]
+[ext_resource type="PackedScene" path="res://scenes/zones/bus_stop.tscn" id="bus"]
+[ext_resource type="PackedScene" path="res://scenes/city/shop_npc.tscn" id="npc"]
+[ext_resource type="Script" path="res://scripts/fashion/fashion_shop.gd" id="fashion"]
+[ext_resource type="Script" path="res://scripts/fashion/salon.gd" id="salon"]
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="item"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-e.glb" id="k1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-male-d.glb" id="k2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-male-b.glb" id="k3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-b.glb" id="b0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-d.glb" id="b1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-e.glb" id="b2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-f.glb" id="b3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-h.glb" id="b4"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_default.glb" id="n0"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_oak.glb" id="n1"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_fat.glb" id="n2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/tree_detailed.glb" id="n3"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_redA.glb" id="n4"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_yellowA.glb" id="n5"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/flower_purpleA.glb" id="n6"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/plant_bush.glb" id="n7"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/nature/grass_large.glb" id="n8"]
+[ext_resource type="Resource" path="res://resources/items/bed_single.tres" id="fur0"]
+[ext_resource type="Resource" path="res://resources/items/bed_double.tres" id="fur1"]
+[ext_resource type="Resource" path="res://resources/items/chair.tres" id="fur2"]
+[ext_resource type="Resource" path="res://resources/items/chair_cushion.tres" id="fur3"]
+[ext_resource type="Resource" path="res://resources/items/sofa.tres" id="fur4"]
+[ext_resource type="Resource" path="res://resources/items/lounge_chair.tres" id="fur5"]
+[ext_resource type="Resource" path="res://resources/items/table.tres" id="fur6"]
+[ext_resource type="Resource" path="res://resources/items/table_round.tres" id="fur7"]
+[ext_resource type="Resource" path="res://resources/items/coffee_table.tres" id="fur8"]
+[ext_resource type="Resource" path="res://resources/items/desk.tres" id="fur9"]
+[ext_resource type="Resource" path="res://resources/items/bookcase.tres" id="fur10"]
+[ext_resource type="Resource" path="res://resources/items/fridge.tres" id="fur11"]
+[ext_resource type="Resource" path="res://resources/items/kitchen_stove.tres" id="fur12"]
+[ext_resource type="Resource" path="res://resources/items/kitchen_cabinet.tres" id="fur13"]
+[ext_resource type="Resource" path="res://resources/items/floor_lamp.tres" id="fur14"]
+[ext_resource type="Resource" path="res://resources/items/potted_plant.tres" id="fur15"]
+[ext_resource type="Resource" path="res://resources/items/rug_rect.tres" id="fur16"]
+[ext_resource type="Resource" path="res://resources/items/rug_round.tres" id="fur17"]
+[ext_resource type="Resource" path="res://resources/items/tv.tres" id="fur18"]
+[ext_resource type="Resource" path="res://resources/items/tv_cabinet.tres" id="fur19"]
+[ext_resource type="Resource" path="res://resources/items/side_table.tres" id="fur20"]
+[ext_resource type="Resource" path="res://resources/items/teddy.tres" id="fur21"]
+[ext_resource type="Resource" path="res://resources/items/radio.tres" id="fur22"]
+[ext_resource type="Resource" path="res://resources/items/bathtub.tres" id="fur23"]
+
+[sub_resource type="StandardMaterial3D" id="PaveMat"]
+albedo_color = Color(0.92, 0.85, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="Pave"]
+material = SubResource("PaveMat")
+size = Vector3(30, 0.03, 24)
+
+[sub_resource type="StandardMaterial3D" id="StageMat"]
+albedo_color = Color(0.55, 0.3, 0.6, 1)
+
+[sub_resource type="BoxMesh" id="StageMesh"]
+material = SubResource("StageMat")
+size = Vector3(8, 0.6, 4)
+
+[sub_resource type="BoxShape3D" id="StageShape"]
+size = Vector3(8, 0.6, 4)
+
+[sub_resource type="StandardMaterial3D" id="CurtainMat"]
+albedo_color = Color(0.85, 0.2, 0.35, 1)
+
+[sub_resource type="BoxMesh" id="Curtain"]
+material = SubResource("CurtainMat")
+size = Vector3(8.4, 4, 0.2)
+
+[sub_resource type="BoxShape3D" id="BldShape"]
+size = Vector3(5.5, 8, 5.5)
+
+[node name="FashionAvenue" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, 35, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+script = ExtResource("terrain")
+flat_zones = Array[Rect2]([Rect2(-22, -24, 44, 46)])
+random_seed = 44
+
+[node name="Mountains" parent="." instance=ExtResource("mount")]
+
+[node name="Promenade" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, -3)
+mesh = SubResource("Pave")
+
+[node name="Trees" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n0"), ExtResource("n1"), ExtResource("n2"), ExtResource("n3")])
+count = 50
+area = Vector2(74, 74)
+keep_out = Array[Rect2]([Rect2(-24, -26, 48, 50)])
+scale_range = Vector2(2.2, 3.2)
+collision_radius = 0.45
+random_seed = 9
+
+[node name="Flowers" type="Node3D" parent="."]
+script = ExtResource("sc")
+scenes = Array[PackedScene]([ExtResource("n4"), ExtResource("n5"), ExtResource("n6"), ExtResource("n7"), ExtResource("n8")])
+count = 70
+area = Vector2(60, 56)
+keep_out = Array[Rect2]([Rect2(-16, -16, 32, 34)])
+random_seed = 6
+
+[node name="BusStop" parent="." instance=ExtResource("bus")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+
+[node name="FashionShop" parent="." instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -3)
+script = ExtResource("fashion")
+title = "Thời Trang Xinh"
+color = Color(1, 0.5, 0.75, 1)
+keeper = ExtResource("k1")
+
+[node name="Salon" parent="." instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, -3)
+script = ExtResource("salon")
+title = "Tiệm Làm Đẹp"
+color = Color(0.6, 0.4, 0.9, 1)
+keeper = ExtResource("k2")
+
+[node name="FurnitureShop" parent="." instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+title = "Cửa Hàng Nội Thất"
+stock = Array[ExtResource("item")]([ExtResource("fur0"), ExtResource("fur1"), ExtResource("fur2"), ExtResource("fur3"), ExtResource("fur4"), ExtResource("fur5"), ExtResource("fur6"), ExtResource("fur7"), ExtResource("fur8"), ExtResource("fur9"), ExtResource("fur10"), ExtResource("fur11"), ExtResource("fur12"), ExtResource("fur13"), ExtResource("fur14"), ExtResource("fur15"), ExtResource("fur16"), ExtResource("fur17"), ExtResource("fur18"), ExtResource("fur19"), ExtResource("fur20"), ExtResource("fur21"), ExtResource("fur22"), ExtResource("fur23")])
+color = Color(0.35, 0.6, 0.9, 1)
+keeper = ExtResource("k3")
+
+[node name="Stage" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -12)
+
+[node name="Mesh" type="MeshInstance3D" parent="Stage"]
+mesh = SubResource("StageMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Stage"]
+shape = SubResource("StageShape")
+
+[node name="Curtain" type="MeshInstance3D" parent="Stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, -2)
+mesh = SubResource("Curtain")
+
+[node name="Spot1" type="OmniLight3D" parent="Stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, 1.5)
+light_color = Color(1, 0.4, 0.8, 1)
+light_energy = 2.0
+omni_range = 6.0
+
+[node name="Spot2" type="OmniLight3D" parent="Stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3, 1.5)
+light_color = Color(0.4, 0.7, 1, 1)
+light_energy = 2.0
+omni_range = 6.0
+
+[node name="StageLabel" type="Label3D" parent="Stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.8, -2)
+billboard = 1
+modulate = Color(1, 0.9, 0.4, 1)
+outline_modulate = Color(0.3, 0.05, 0.25, 1)
+text = "SÂN KHẤU"
+font_size = 110
+outline_size = 24
+
+[node name="Welcome" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, -18)
+billboard = 1
+modulate = Color(1, 0.7, 0.85, 1)
+outline_modulate = Color(0.35, 0.05, 0.25, 1)
+text = "ĐẠI LỘ THỜI TRANG"
+font_size = 140
+outline_size = 28
+
+[node name="Buildings" type="Node3D" parent="."]
+
+[node name="Bld0" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, -18)
+
+[node name="Model" parent="Buildings/Bld0" instance=ExtResource("b0")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+shape = SubResource("BldShape")
+
+[node name="Bld1" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -20)
+
+[node name="Model" parent="Buildings/Bld1" instance=ExtResource("b1")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+shape = SubResource("BldShape")
+
+[node name="Bld2" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -20)
+
+[node name="Model" parent="Buildings/Bld2" instance=ExtResource("b2")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+shape = SubResource("BldShape")
+
+[node name="Bld3" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -18)
+
+[node name="Model" parent="Buildings/Bld3" instance=ExtResource("b3")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+shape = SubResource("BldShape")
+
+[node name="Bld4" type="StaticBody3D" parent="Buildings"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -4)
+
+[node name="Model" parent="Buildings/Bld4" instance=ExtResource("b4")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+shape = SubResource("BldShape")

@@ -10,4 +10,4 @@ description = "Đua thú và trò chơi giải trí."
 scene_path = "res://scenes/zones/fun_park.tscn"
 unlock_level = 2
 ticket_price = 10
-order = 3
+order = 4

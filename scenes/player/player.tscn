@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/camera_rig.gd" id="2_cam"]
-[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-b.glb" id="3_model"]
 
 [sub_resource type="CapsuleShape3D" id="Shape"]
 radius = 0.35
@@ -18,8 +17,6 @@ shape = SubResource("Shape")
 
 [node name="Visual" type="Node3D" parent="."]
 
-[node name="Model" parent="Visual" instance=ExtResource("3_model")]
-transform = Transform3D(-2.2, 0, 0, 0, 2.2, 0, 0, 0, -2.2, 0, 0, 0)
 
 [node name="CameraRig" type="Node3D" parent="."]
 top_level = true

@@ -45,6 +45,16 @@ func get_plot_at(world_pos: Vector3) -> FarmPlot:
 	return get_plot(world_to_cell(world_pos))
 
 
+## Admin/debug: every planted plot becomes harvestable.
+func ripen_all() -> void:
+	for plot: FarmPlot in _plots.values():
+		if plot.crop and plot.state == FarmPlot.State.PLANTED:
+			plot.stage = plot.crop.stage_durations.size()
+			plot.state = FarmPlot.State.HARVESTABLE
+			plot.problem = FarmPlot.Problem.NONE
+			plot._refresh()
+
+
 func expand_cost() -> int:
 	return land_cost * (size.x - 5)
 

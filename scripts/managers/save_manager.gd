@@ -77,6 +77,11 @@ func load_game() -> bool:
 	_pending = data.get("world", {})
 	if int(data.version) == 1: # v1 stored only the farm plots
 		_pending = {"farm_grid": {"plots": data.get("farm", [])}}
+	# objects that registered before the save was loaded (the persistent Player) get their data now
+	for key: StringName in _savables:
+		if is_instance_valid(_savables[key]) and _savables[key].has_method(&"load_save") and _pending.has(String(key)):
+			_savables[key].load_save(_pending[String(key)])
+			_pending.erase(String(key))
 	GameState.money_changed.emit()
 	Progression.xp_changed.emit()
 	return true

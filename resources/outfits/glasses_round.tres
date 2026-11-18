@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="OutfitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/items/glasses_round.tres" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/glasses_round.glb" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"glasses_round"
+item = ExtResource("2")
+model = ExtResource("3")
+slot = 1
+gem_price = 0
+unlock_level = 1

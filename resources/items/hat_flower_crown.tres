@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/hat_flower_crown.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"hat_flower_crown"
+display_name = "Vòng hoa"
+description = "Phụ kiện thời trang. Giá 120 xu."
+category = 4
+color = Color(1.0, 0.6, 0.75, 1)
+buy_price = 120
+sell_price = 60
+model = ExtResource("2_model")

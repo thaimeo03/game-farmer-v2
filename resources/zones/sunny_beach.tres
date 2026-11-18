@@ -10,4 +10,4 @@ description = "Câu cá biển, dạo biển, ngắm hoàng hôn."
 scene_path = "res://scenes/zones/sunny_beach.tscn"
 unlock_level = 3
 ticket_price = 15
-order = 4
+order = 5

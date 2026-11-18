@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="OutfitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/items/halo.tres" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/halo.glb" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"halo"
+item = ExtResource("2")
+model = ExtResource("3")
+slot = 4
+gem_price = 40
+unlock_level = 3

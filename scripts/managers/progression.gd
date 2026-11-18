@@ -11,6 +11,8 @@ const XP := {
 	&"weed": 1, &"spray": 1, &"fertilize": 1, &"collect": 3, &"craft": 4, &"order": 0, &"pond": 4,
 }
 
+const LEVEL_GEMS := 5 ## Lượng reward per level-up (the in-game source of premium currency)
+
 var level := 1
 var xp := 0 ## progress inside the current level
 
@@ -26,7 +28,9 @@ func add_xp(amount: int) -> void:
 		level += 1
 		var unlocked := Database.zones.filter(func(z: ZoneData) -> bool: return z.unlock_level == level)
 		var names := ", ".join(unlocked.map(func(z: ZoneData) -> String: return z.display_name))
-		GameState.toast("Lên cấp %d!%s" % [level, "  Mở khóa: " + names if names else ""])
+		GameState.gems += LEVEL_GEMS
+		GameState.money_changed.emit()
+		GameState.toast("Lên cấp %d! +%d Lượng%s" % [level, LEVEL_GEMS, "  Mở khóa: " + names if names else ""])
 		leveled_up.emit(level)
 	xp_changed.emit()
 

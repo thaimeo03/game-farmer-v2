@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PetData" format=3]
+
+[ext_resource type="Script" path="res://scripts/pets/pet_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/items/pet_panda.tres" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/pets/animal-panda.glb" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"pet_panda"
+display_name = "Gấu trúc"
+item = ExtResource("2")
+model = ExtResource("3")
+model_scale = 0.4
+base_speed = 4.2

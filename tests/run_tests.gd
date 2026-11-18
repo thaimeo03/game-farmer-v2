@@ -13,6 +13,7 @@ func _ready() -> void:
 	await test_world()
 	await test_farm_plus()
 	await test_house()
+	await test_fashion()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -121,8 +122,8 @@ func test_minigames() -> void:
 func test_world() -> void:
 	# content database
 	_check(Database.item(&"fish_gold") != null and Database.crop(&"tomato") != null, "database finds items and crops by id")
-	_check(Database.zones.size() == 6 and Database.zones[0].id == &"my_farm", "6 zones, ordered")
-	_check(Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route).size() == 5, "5 zones on the bus route")
+	_check(Database.zones.size() == 7 and Database.zones[0].id == &"my_farm", "7 zones, ordered")
+	_check(Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route).size() == 6, "6 zones on the bus route")
 	for z in Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route):
 		var root: Node = load(z.scene_path).instantiate()
 		_check(root.find_child("BusStop", true, false) is BusStop, "zone %s has a BusStop" % z.id)
@@ -341,6 +342,79 @@ func test_house() -> void:
 	await get_tree().process_frame
 	_check((root2 as House).to_save().items.size() == saved.items.size() and (root2 as House).floor_style == 1, "house layout restored")
 	root2.free()
+
+
+func test_fashion() -> void:
+	var inv := GameState.inventory
+	SaveManager._pending.erase("appearance")
+	var p: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child(p)
+	await get_tree().process_frame
+	_check(Database.outfits.size() >= 12 and Database.pets.size() == 6, "outfits and pets loaded")
+
+	# accessories attach to bones at sensible anchors
+	var model: Node3D = p.visual.get_node(^"Model")
+	var skel := model.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	var anchors := Avatar._anchors(skel)
+	_check(anchors[OutfitData.Slot.HAT][1].y > anchors[OutfitData.Slot.GLASSES][1].y, "hat sits above the glasses")
+	_check(anchors[OutfitData.Slot.GLASSES][1].y > anchors[OutfitData.Slot.NECK][1].y, "glasses above the neck")
+	_check(anchors[OutfitData.Slot.BACK][1].z < anchors[OutfitData.Slot.GLASSES][1].z, "back item behind the face")
+	var hat: OutfitData = Database.outfits[&"hat_straw"]
+	var wings: OutfitData = Database.outfits[&"angel_wings"]
+	p.equip_outfit(hat)
+	p.equip_outfit(wings)
+	_check(skel.has_node(NodePath("Acc%d" % OutfitData.Slot.HAT)) and skel.has_node(NodePath("Acc%d" % OutfitData.Slot.BACK)), "accessories attached to the skeleton")
+	p.unequip(OutfitData.Slot.BACK)
+	await get_tree().process_frame
+	_check(not skel.has_node(NodePath("Acc%d" % OutfitData.Slot.BACK)) and p.equipped.size() == 1, "unequip removes the accessory")
+
+	# base character swap keeps the outfit
+	p.owned_bases.append("character-male-c")
+	p.set_base("character-male-c")
+	await get_tree().process_frame
+	var skel2 := p.visual.get_node(^"Model").find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	_check(skel2 != skel and skel2.has_node(NodePath("Acc%d" % OutfitData.Slot.HAT)) and p.anim != null, "new base keeps hat and animations")
+
+	# premium currency
+	GameState.gems = 10
+	_check(not GameState.spend_gems(wings.gem_price) and GameState.gems == 10, "cannot buy wings without enough Lượng")
+	GameState.gems = 100
+	_check(GameState.spend_gems(wings.gem_price) and GameState.gems == 100 - wings.gem_price, "wings bought with Lượng")
+
+	# pets: follow + race guest
+	var dog: PetData = Database.pets[&"pet_dog"]
+	inv.add(dog.item)
+	p.set_active_pet(dog)
+	_check(p.pet_companion().visible and p.pet_level() == 1, "active pet follows, level 1")
+	p.add_affection(45)
+	_check(p.pet_level() == 3 and dog.race_speed(45) > dog.base_speed, "affection raises level and race speed")
+	var race: PetRace = load("res://scenes/minigames/pet_race.tscn").instantiate()
+	add_child(race)
+	race.set_guest(dog, 45)
+	_check(race.racers[4].name.begins_with(dog.display_name) and race.racers[4].payout == 3, "your pet runs in the last lane")
+	race.set_guest(null)
+	_check(race.racers[4].name == "Heo Ủn", "house racer restored without a pet")
+	race.queue_free()
+
+	# appearance save round trip
+	var saved := p.to_save()
+	p.free()
+	var p2: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child(p2)
+	await get_tree().process_frame
+	p2.load_save(JSON.parse_string(JSON.stringify(saved)))
+	_check(p2.base_id == "character-male-c" and p2.equipped.get(OutfitData.Slot.HAT) == hat and p2.active_pet == dog, "appearance and pet restored")
+	_check(p2.pet_level() == 3, "pet affection restored")
+	p2.free()
+
+	# admin login uses the config file
+	var admin := AdminPanel.new()
+	var cfg := ConfigFile.new()
+	_check(cfg.load(AdminPanel.CONFIG) == OK, "admin config present")
+	admin._cfg = cfg
+	_check(admin.check(str(cfg.get_value("admin", "username")), str(cfg.get_value("admin", "password"))), "admin credentials accepted")
+	_check(not admin.check("admin", "wrong") and not admin.check("", ""), "wrong admin password rejected")
+	admin.free()
 
 
 func _check(ok: bool, msg: String) -> void:

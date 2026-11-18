@@ -16,31 +16,14 @@
 [ext_resource type="Resource" path="res://resources/items/pesticide.tres" id="sup6"]
 [ext_resource type="Resource" path="res://resources/items/fingerling.tres" id="sup7"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-d.glb" id="k_supply"]
-[ext_resource type="Resource" path="res://resources/items/bed_single.tres" id="fur0"]
-[ext_resource type="Resource" path="res://resources/items/bed_double.tres" id="fur1"]
-[ext_resource type="Resource" path="res://resources/items/chair.tres" id="fur2"]
-[ext_resource type="Resource" path="res://resources/items/chair_cushion.tres" id="fur3"]
-[ext_resource type="Resource" path="res://resources/items/sofa.tres" id="fur4"]
-[ext_resource type="Resource" path="res://resources/items/lounge_chair.tres" id="fur5"]
-[ext_resource type="Resource" path="res://resources/items/table.tres" id="fur6"]
-[ext_resource type="Resource" path="res://resources/items/table_round.tres" id="fur7"]
-[ext_resource type="Resource" path="res://resources/items/coffee_table.tres" id="fur8"]
-[ext_resource type="Resource" path="res://resources/items/desk.tres" id="fur9"]
-[ext_resource type="Resource" path="res://resources/items/bookcase.tres" id="fur10"]
-[ext_resource type="Resource" path="res://resources/items/fridge.tres" id="fur11"]
-[ext_resource type="Resource" path="res://resources/items/kitchen_stove.tres" id="fur12"]
-[ext_resource type="Resource" path="res://resources/items/kitchen_cabinet.tres" id="fur13"]
-[ext_resource type="Resource" path="res://resources/items/floor_lamp.tres" id="fur14"]
-[ext_resource type="Resource" path="res://resources/items/potted_plant.tres" id="fur15"]
-[ext_resource type="Resource" path="res://resources/items/rug_rect.tres" id="fur16"]
-[ext_resource type="Resource" path="res://resources/items/rug_round.tres" id="fur17"]
-[ext_resource type="Resource" path="res://resources/items/tv.tres" id="fur18"]
-[ext_resource type="Resource" path="res://resources/items/tv_cabinet.tres" id="fur19"]
-[ext_resource type="Resource" path="res://resources/items/side_table.tres" id="fur20"]
-[ext_resource type="Resource" path="res://resources/items/teddy.tres" id="fur21"]
-[ext_resource type="Resource" path="res://resources/items/radio.tres" id="fur22"]
-[ext_resource type="Resource" path="res://resources/items/bathtub.tres" id="fur23"]
-[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-male-b.glb" id="k_fur"]
+[ext_resource type="Resource" path="res://resources/items/pet_dog.tres" id="pet0"]
+[ext_resource type="Resource" path="res://resources/items/pet_cat.tres" id="pet1"]
+[ext_resource type="Resource" path="res://resources/items/pet_bunny.tres" id="pet2"]
+[ext_resource type="Resource" path="res://resources/items/pet_fox.tres" id="pet3"]
+[ext_resource type="Resource" path="res://resources/items/pet_panda.tres" id="pet4"]
+[ext_resource type="Resource" path="res://resources/items/pet_penguin.tres" id="pet5"]
+[ext_resource type="Resource" path="res://resources/items/pet_treat.tres" id="pet6"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/characters/character-female-a.glb" id="k_pet"]
 
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-a.glb" id="b0"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/building-skyscraper-a.glb" id="b1"]
@@ -202,9 +185,9 @@ stock = Array[ExtResource("3_item")]([ExtResource("sup0"), ExtResource("sup1"), 
 color = Color(0.6, 0.4, 0.85, 1)
 keeper = ExtResource("k_supply")
 
-[node name="FurnitureShop" parent="." instance=ExtResource("1_npc")]
+[node name="PetShop" parent="." instance=ExtResource("1_npc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 5)
-title = "Cửa Hàng Nội Thất"
-stock = Array[ExtResource("3_item")]([ExtResource("fur0"), ExtResource("fur1"), ExtResource("fur2"), ExtResource("fur3"), ExtResource("fur4"), ExtResource("fur5"), ExtResource("fur6"), ExtResource("fur7"), ExtResource("fur8"), ExtResource("fur9"), ExtResource("fur10"), ExtResource("fur11"), ExtResource("fur12"), ExtResource("fur13"), ExtResource("fur14"), ExtResource("fur15"), ExtResource("fur16"), ExtResource("fur17"), ExtResource("fur18"), ExtResource("fur19"), ExtResource("fur20"), ExtResource("fur21"), ExtResource("fur22"), ExtResource("fur23")])
-color = Color(0.35, 0.6, 0.9, 1)
-keeper = ExtResource("k_fur")
+title = "Cửa Hàng Thú Cưng"
+stock = Array[ExtResource("3_item")]([ExtResource("pet0"), ExtResource("pet1"), ExtResource("pet2"), ExtResource("pet3"), ExtResource("pet4"), ExtResource("pet5"), ExtResource("pet6")])
+color = Color(1, 0.6, 0.25, 1)
+keeper = ExtResource("k_pet")

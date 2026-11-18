@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"fashion_avenue"
+display_name = "Đại Lộ Thời Trang"
+description = "Thời trang, làm đẹp, thú cưng."
+scene_path = "res://scenes/zones/fashion_avenue.tscn"
+unlock_level = 2
+ticket_price = 10
+order = 3

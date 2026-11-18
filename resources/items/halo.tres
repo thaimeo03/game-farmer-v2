@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/halo.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"halo"
+display_name = "Hào quang"
+description = "Phụ kiện thời trang. Giá 40 Lượng."
+category = 4
+color = Color(1, 0.9, 0.4, 1)
+buy_price = 0
+sell_price = 0
+model = ExtResource("2_model")

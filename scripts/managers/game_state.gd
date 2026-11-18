@@ -56,6 +56,15 @@ func spend(amount: int) -> bool:
 	return true
 
 
+func spend_gems(amount: int) -> bool:
+	if amount < 0 or gems < amount:
+		toast("Không đủ Lượng!")
+		return false
+	gems -= amount
+	money_changed.emit()
+	return true
+
+
 func earn(amount: int) -> void:
 	coins += amount
 	money_changed.emit()
