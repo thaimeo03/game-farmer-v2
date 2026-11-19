@@ -14,6 +14,13 @@ extends Node3D
 @export var pitch := -45.0
 @export var zoom := 12.0
 
+## Smoothed values we own. Never read them back from rotation_degrees: Godot returns that
+## wrapped to (-180, 180], so lerping from it toward an unbounded yaw spun the camera a full
+## turn whenever a fast drag crossed 180 degrees.
+var _cur_yaw := 0.0
+var _cur_pitch := 0.0
+var _cur_zoom := 0.0
+
 @onready var _arm: SpringArm3D = $SpringArm3D
 @onready var _target: Node3D = get_parent()
 
@@ -25,9 +32,10 @@ func _ready() -> void:
 ## Jump to the current yaw/pitch/zoom and target position without smoothing.
 func snap() -> void:
 	global_position = _target.global_position
-	rotation_degrees.y = yaw
-	_arm.rotation_degrees.x = pitch
-	_arm.spring_length = zoom
+	_cur_yaw = yaw
+	_cur_pitch = pitch
+	_cur_zoom = zoom
+	_apply()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -44,6 +52,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	global_position = global_position.lerp(_target.global_position, 1.0 - exp(-follow_speed * delta))
 	var w := 1.0 - exp(-smooth_speed * delta)
-	rotation_degrees.y = lerpf(rotation_degrees.y, yaw, w)
-	_arm.rotation_degrees.x = lerpf(_arm.rotation_degrees.x, pitch, w)
-	_arm.spring_length = lerpf(_arm.spring_length, zoom, w)
+	_cur_yaw = lerpf(_cur_yaw, yaw, w)
+	_cur_pitch = lerpf(_cur_pitch, pitch, w)
+	_cur_zoom = lerpf(_cur_zoom, zoom, w)
+	# keep the numbers small without changing the difference between them
+	var turns := floorf(_cur_yaw / 360.0) * 360.0
+	_cur_yaw -= turns
+	yaw -= turns
+	_apply()
+
+
+func _apply() -> void:
+	rotation_degrees.y = _cur_yaw
+	_arm.rotation_degrees.x = _cur_pitch
+	_arm.spring_length = _cur_zoom

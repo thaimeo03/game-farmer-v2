@@ -14,6 +14,7 @@ func _ready() -> void:
 	await test_farm_plus()
 	await test_house()
 	await test_fashion()
+	await test_camera()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -415,6 +416,29 @@ func test_fashion() -> void:
 	_check(admin.check(str(cfg.get_value("admin", "username")), str(cfg.get_value("admin", "password"))), "admin credentials accepted")
 	_check(not admin.check("admin", "wrong") and not admin.check("", ""), "wrong admin password rejected")
 	admin.free()
+
+
+func test_camera() -> void:
+	# fast right-drag across 180 degrees must not spin the camera the long way round
+	var p: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child(p)
+	await get_tree().process_frame
+	var cam := p.cam
+	cam.yaw = 170.0
+	cam.snap()
+	var drag := InputEventMouseMotion.new()
+	drag.relative = Vector2(-200, 0) # +60 degrees in one event
+	cam.yaw -= drag.relative.x * cam.rotate_sensitivity
+	var prev: float = cam.global_rotation_degrees.y
+	var worst := 0.0
+	for i in 60:
+		cam._process(1.0 / 60.0)
+		var now: float = cam.global_rotation_degrees.y
+		worst = maxf(worst, absf(wrapf(now - prev, -180.0, 180.0)))
+		prev = now
+	_check(worst < 15.0, "camera turns smoothly across 180 degrees (max step %.1f)" % worst)
+	_check(absf(wrapf(cam.global_rotation_degrees.y - 230.0, -180.0, 180.0)) < 2.0, "camera ends at the dragged yaw")
+	p.free()
 
 
 func _check(ok: bool, msg: String) -> void:
