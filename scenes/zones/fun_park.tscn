@@ -28,6 +28,8 @@
 [ext_resource type="PackedScene" path="res://assets/models/props/ring_toss_booth.glb" id="m_booth"]
 [ext_resource type="PackedScene" path="res://assets/models/props/caro_table.glb" id="m_caro"]
 
+[ext_resource type="Script" path="res://scripts/world/street_lamp.gd" id="p9_lamp"]
+
 [sub_resource type="SphereShape3D" id="Near1_8"]
 radius = 1.8
 
@@ -188,3 +190,24 @@ transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0, 0, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CaroTable/Body"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("TableBody")
+
+[node name="EventSpot" type="Marker3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -5, 0, -12)
+
+[node name="Lamps" type="Node3D" parent="."]
+
+[node name="Lamp0" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 4, 0, 5)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp1" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 12, 0, 5)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp2" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -2, 0, -4)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp3" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 20, 0, -9)
+script = ExtResource("p9_lamp")

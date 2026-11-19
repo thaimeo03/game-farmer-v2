@@ -7,6 +7,7 @@ extends CharacterBody3D
 ## procedural placeholder (bob / bow) is used so primitives still read well.
 
 signal tool_changed
+signal emoted(kind: StringName)
 
 enum Tool { HOE, WATER, SEED, ROD, FERTILIZER }
 enum State { IDLE, WALK, RUN, ACTION }
@@ -23,6 +24,12 @@ const ANIM_ALIASES := {
 	&"run": &"sprint", &"till": &"attack-melee-right", &"water": &"interact-right",
 	&"plant": &"pick-up", &"harvest": &"pick-up", &"fish": &"holding-right",
 	&"fertilize": &"pick-up", &"weed": &"pick-up", &"spray": &"interact-right",
+}
+## Emote wheel (G): kind -> [clip, bubble, name]
+const EMOTES := {
+	&"wave": [&"interact-left", "👋", "Vẫy tay"], &"laugh": [&"emote-yes", "😄", "Cười"],
+	&"sad": [&"emote-no", "😢", "Buồn"], &"jump": [&"jump", "🎉", "Nhảy"],
+	&"heart": [&"emote-yes", "❤", "Thả tim"], &"sit": [&"sit", "😌", "Ngồi"],
 }
 const LOOPING: Array[StringName] = [&"idle", &"walk", &"sprint"]
 const TOOL_MODELS: Array[PackedScene] = [
@@ -64,6 +71,9 @@ var _pet: PetCompanion
 var _hand: BoneAttachment3D
 var _held: Node3D
 var _bob_t := 0.0
+var _bubble: Label3D
+var _bubble_t := 0.0
+var _emote_sit := false
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var visual: Node3D = $Visual
@@ -185,6 +195,9 @@ func _physics_process(delta: float) -> void:
 		if not GameState.ui_busy and Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back").length() > 0.1:
 			stand_up()
 		return
+	if _emote_sit and not GameState.ui_busy and Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back").length() > 0.1:
+		_emote_sit = false
+		_set_state(State.IDLE)
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 
@@ -207,6 +220,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	if _bubble_t > 0.0:
+		_bubble_t -= delta
+		_bubble.visible = _bubble_t > 0.0
 	if anim and anim.has_animation(&"walk"):
 		return
 	var moving := state == State.WALK or state == State.RUN
@@ -299,6 +315,50 @@ func try_interact() -> void:
 	tw.tween_callback(func() -> void:
 		_finish_action(plot, action, seed_item)
 		_set_state(State.IDLE))
+
+
+## Speech/emote bubble above the head.
+func say(text: String, seconds := 2.5) -> void:
+	if not _bubble:
+		_bubble = Label3D.new()
+		_bubble.position.y = 2.6
+		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_bubble.font_size = 64
+		_bubble.outline_size = 14
+		add_child(_bubble)
+	_bubble.text = text
+	_bubble.visible = true
+	_bubble_t = seconds
+
+
+func face(point: Vector3) -> void:
+	var to := point - global_position
+	if Vector2(to.x, to.z).length() > 0.05:
+		visual.rotation.y = atan2(-to.x, -to.z)
+
+
+## Plays an emote (see EMOTES); nearby neighbors answer via the `emoted` signal.
+func emote(kind: StringName) -> void:
+	if state == State.ACTION or _sitting or _riding or not EMOTES.has(kind):
+		return
+	var e: Array = EMOTES[kind]
+	say(e[1])
+	emoted.emit(kind)
+	Quests.notify(&"emote", kind)
+	state = State.ACTION
+	velocity = Vector3.ZERO
+	if not anim or not anim.has_animation(e[0]):
+		_set_state(State.IDLE)
+		return
+	anim.play(e[0], 0.15)
+	if kind == &"sit":
+		_emote_sit = true # stays seated until you move
+		return
+	var tw := create_tween()
+	tw.tween_interval(anim.get_animation(e[0]).length)
+	tw.tween_callback(func() -> void:
+		if state == State.ACTION and not _emote_sit:
+			_set_state(State.IDLE))
 
 
 ## Long activities driven by someone else (fishing...): lock into ACTION, face a point, loop a clip.

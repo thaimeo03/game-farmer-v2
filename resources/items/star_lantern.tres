@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/outfits/star_lantern.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"star_lantern"
+display_name = "Đèn ông sao"
+description = "Phụ kiện sự kiện Trung Thu (đeo sau lưng)."
+category = 4
+color = Color(1.0, 0.35, 0.2, 1)
+buy_price = 120
+sell_price = 40
+model = ExtResource("2_model")

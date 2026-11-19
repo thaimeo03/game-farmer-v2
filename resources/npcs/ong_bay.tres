@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_ong_bay.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/hat_top.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"ong_bay"
+display_name = "Ông Bảy"
+title = "Bưu tá"
+base_id = "character-male-g"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"pumpkin_pie", &"mushroom_soup", &"mooncake"])
+dislikes = Array[StringName]([&"trash_can", &"fish_perch"])
+schedule = PackedStringArray("6 market_town PostOffice", "10 my_farm BusStop", "11 market_town PostOffice", "17 bus_terminal BayWest", "19 home")
+lines = Array[String](["Thư từ là phải giao tận tay, ông làm nghề này 30 năm rồi.", "Có thư thì ra hộp thư trước nhà mà xem nhé."])
+lines_friend = Array[String](["Cháu gửi quà cho hàng xóm thì cứ ra bưu điện.", "Ông đi khắp làng, chuyện gì cũng biết!"])
+lines_close = Array[String](["Ông coi cháu như cháu ruột vậy.", "Cảm ơn cháu đã hay hỏi thăm ông già này."])
+quest = ExtResource("q")

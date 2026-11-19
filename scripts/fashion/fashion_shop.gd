@@ -15,6 +15,8 @@ func _entries(player: Player) -> Array:
 	var rows := []
 	for o: OutfitData in list:
 		var owned := GameState.inventory.count(o.item) > 0
+		if o.event_only and not owned:
+			continue
 		var worn: bool = player.equipped.get(o.slot) == o
 		var locked := Progression.level < o.unlock_level
 		var price := "%d Lượng" % o.gem_price if o.gem_price > 0 else "%d xu" % o.item.buy_price

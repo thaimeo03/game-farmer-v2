@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_co_lan.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/scarf_red.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"co_lan"
+display_name = "Cô Lan"
+title = "Đầu bếp"
+base_id = "character-female-c"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"tomato", &"milk", &"egg", &"mooncake"])
+dislikes = Array[StringName]([&"trash_bones", &"trash_bottle"])
+schedule = PackedStringArray("7 market_town Market", "12 fun_park Parasol0", "15 market_town Market", "20 home")
+lines = Array[String](["Cà chua chín mọng là nấu canh ngon nhất.", "Hôm nay chợ đông quá trời!"])
+lines_friend = Array[String](["Lần sau cô dạy con làm bánh bí ngô nha.", "Có trứng tươi thì cho cô xin vài quả nhé."])
+lines_close = Array[String](["Con như người nhà rồi, ghé cô ăn cơm đi.", "Cô để dành phần ngon nhất cho con đó."])
+quest = ExtResource("q")

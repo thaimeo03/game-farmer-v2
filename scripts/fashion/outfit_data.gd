@@ -11,3 +11,4 @@ const SLOT_NAMES: Array[String] = ["Mũ", "Kính", "Cổ", "Lưng", "Hào quang"
 @export var slot := Slot.HAT
 @export var gem_price := 0 ## > 0: bought with Lượng instead of xu
 @export var unlock_level := 1
+@export var event_only := false ## sold only at a seasonal event stall

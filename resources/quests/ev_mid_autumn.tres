@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ev_mid_autumn"
+title = "Đêm hội Trăng Rằm"
+kind = 3
+steps = Array[Dictionary]([{"do": "buy", "count": 3, "text": "Mua 3 bánh trung thu ở gian hàng Trung Thu", "what": "mooncake", "zone": "market_town", "at": "EventSpot"}, {"do": "gift", "count": 3, "text": "Tặng bánh trung thu cho 3 hàng xóm", "what": "mooncake"}])
+reward_coins = 150
+reward_xp = 50
+reward_gems = 5
+reward_items = {&"spin_ticket": 2}

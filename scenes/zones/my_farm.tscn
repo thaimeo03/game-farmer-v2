@@ -35,6 +35,11 @@
 [ext_resource type="PackedScene" path="res://assets/models/kenney/nature/rock_smallA.glb" id="n12"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/nature/stump_round.glb" id="n13"]
 
+[ext_resource type="Script" path="res://scripts/world/street_lamp.gd" id="p9_lamp"]
+[ext_resource type="Script" path="res://scripts/social/post_office.gd" id="p9_post"]
+[ext_resource type="PackedScene" path="res://assets/models/props/post_office.glb" id="p9_post_m"]
+[ext_resource type="PackedScene" path="res://assets/models/props/mailbox.glb" id="p9_mail_m"]
+
 [sub_resource type="BoxShape3D" id="HouseBody"]
 size = Vector3(5.4, 4, 4.2)
 
@@ -43,6 +48,16 @@ radius = 1.6
 
 [sub_resource type="BoxShape3D" id="MachineBody"]
 size = Vector3(1.4, 1.6, 1.2)
+
+[sub_resource type="SphereShape3D" id="p9_near"]
+radius = 1.8
+
+[sub_resource type="BoxShape3D" id="p9_post_body"]
+size = Vector3(3.6, 2.6, 2.4)
+
+[sub_resource type="CylinderShape3D" id="p9_mail_body"]
+height = 1.4
+radius = 0.25
 
 [node name="MyFarm" type="Node3D"]
 
@@ -233,3 +248,35 @@ prompt_height = 2.6
 [node name="CollisionShape3D" type="CollisionShape3D" parent="FrontDoor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("Near")
+
+[node name="Mailbox" type="Area3D" parent="."]
+transform = Transform3D(0.0, 0, 1.0, 0, 1, 0, -1.0, 0, 0.0, 1.8, 0, 6)
+script = ExtResource("p9_post")
+prompt_height = 2.2
+counter = false
+
+[node name="Detect" type="CollisionShape3D" parent="Mailbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0.9)
+shape = SubResource("p9_near")
+
+[node name="Model" parent="Mailbox" instance=ExtResource("p9_mail_m")]
+
+[node name="Body" type="StaticBody3D" parent="Mailbox"]
+
+[node name="Shape" type="CollisionShape3D" parent="Mailbox/Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("p9_mail_body")
+
+[node name="Lamps" type="Node3D" parent="."]
+
+[node name="Lamp0" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -1.8, 0, 10.5)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp1" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 9.5, 0, 9.5)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp2" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -4.6, 0, 3.6)
+script = ExtResource("p9_lamp")

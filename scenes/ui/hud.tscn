@@ -58,6 +58,7 @@ theme_override_font_sizes/font_size = 14
 text = "WASD: đi | Shift: chạy | E/Space/Click: tương tác
 1-5: công cụ (bấm 3 lần nữa để đổi hạt)
 I/Tab: túi đồ | O: tủ đồ | J: sổ cá | Esc: đóng
+L: nhiệm vụ & hàng xóm | G: biểu cảm
 Chuột phải: xoay camera | Lăn chuột: zoom"
 horizontal_alignment = 2
 

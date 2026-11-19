@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"q_anh_khoa"
+title = "Ngư dân tập sự"
+kind = 2
+giver = &"anh_khoa"
+description = "Anh Khoa muốn xem bạn câu cá có giỏi không."
+steps = Array[Dictionary]([{"do": "visit", "count": 1, "text": "Đi thuyền ra Đảo Nhỏ", "what": "little_isle", "zone": "little_isle"}, {"do": "fish", "count": 5, "text": "Câu 5 con cá bất kỳ"}])
+reward_coins = 200
+reward_xp = 50
+reward_items = {&"bait": 5}

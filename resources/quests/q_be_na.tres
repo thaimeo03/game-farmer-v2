@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"q_be_na"
+title = "Vua trò chơi"
+kind = 2
+giver = &"be_na"
+description = "Bé Na thách bạn chơi hết các trò trong công viên."
+steps = Array[Dictionary]([{"do": "play", "count": 3, "text": "Chơi 3 trò ở Công Viên Vui Vẻ", "zone": "fun_park"}])
+reward_coins = 100
+reward_xp = 30
+reward_items = {&"spin_ticket": 3}

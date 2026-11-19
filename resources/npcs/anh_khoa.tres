@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_anh_khoa.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/hat_cap.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"anh_khoa"
+display_name = "Anh Khoa"
+title = "Ngư dân"
+base_id = "character-male-e"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"bait", &"fish_tuna", &"squid", &"mooncake"])
+dislikes = Array[StringName]([&"trash_bottle"])
+schedule = PackedStringArray("5 sunny_beach FishingPier", "11 little_isle Lighthouse", "15 sunny_beach Parasol3", "19 home")
+lines = Array[String](["Sóng êm thế này là cá cắn câu nhiều lắm.", "Ra Đảo Nhỏ có cá kiếm đó, thử chưa?"])
+lines_friend = Array[String](["Mồi tốt thì cá to, nhớ mua mồi nha.", "Sáng sớm là lúc câu cá ngon nhất."])
+lines_close = Array[String](["Lần tới anh dẫn em ra chỗ bí mật câu cá ngừ.", "Có em đi câu cùng vui hơn hẳn."])
+quest = ExtResource("q")

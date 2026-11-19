@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_bac_tam.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/hat_straw.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"bac_tam"
+display_name = "Bác Tâm"
+title = "Lão nông"
+base_id = "character-male-c"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"pumpkin", &"mooncake", &"fertilizer"])
+dislikes = Array[StringName]([&"trash_bottle", &"trash_can"])
+schedule = PackedStringArray("6 market_town SeedShop", "11 bus_terminal Planter1", "14 market_town Fountain", "19 home")
+lines = Array[String](["Đất có tốt thì cây mới tươi, nhớ tưới đều nhé.", "Hạt bí ngô dễ trồng mà bán được giá lắm!"])
+lines_friend = Array[String](["Cháu chăm ruộng giỏi ghê, bác nhìn là biết.", "Mưa xuống là bác khỏi phải tưới, khỏe re!"])
+lines_close = Array[String](["Có cháu làm hàng xóm, bác vui lắm.", "Bí quyết của bác: bón phân trước khi tưới."])
+quest = ExtResource("q")

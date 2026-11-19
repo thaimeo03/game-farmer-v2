@@ -53,6 +53,8 @@ func open_menu() -> void:
 		{"text": "Cấp hiện tại: %d" % Progression.level, "buttons": [["+1 cấp", _level_up.bind(1), true], ["+5 cấp", _level_up.bind(5), true]]},
 		{"text": "Nhận 10 mỗi vật phẩm (hạt, nông sản, thú, nội thất, thời trang...)", "buttons": [["Nhận", _give_all, true]]},
 		{"text": "Thời gian & nông trại", "buttons": [["Tua 10 phút", func() -> void: GameState.clock += 600.0, true], ["Làm chín ruộng", _ripen, true]]},
+		{"text": "Thời tiết & sự kiện", "buttons": [["Mưa 3 giờ", func() -> void: GameState.rain_until = GameState.clock + 180.0 / GameState.MINUTES_PER_SECOND, true],
+			["Tới Trung Thu", _to_festival, true]]},
 		{"text": "Thú cưng đang dắt +50 thân thiết", "buttons": [["Thêm", func() -> void: player.add_affection(50), player.active_pet != null]]},
 	]
 	for i in range(0, zone_rows.size(), 2):
@@ -81,6 +83,15 @@ func _give_all() -> void:
 	for item: ItemData in Database.items.values():
 		GameState.inventory.add(item, 10)
 	GameState.toast("Đã nhận 10 mỗi vật phẩm")
+
+
+## Jumps to 18:00 on the next day 13 of the month (Mid-Autumn starts).
+func _to_festival() -> void:
+	var day := GameState.day() + 1
+	while day % 30 + 1 != 13:
+		day += 1
+	GameState.clock = (day * 1440 + 18 * 60 - GameState.DAY_START_MINUTE) / GameState.MINUTES_PER_SECOND
+	GameState.toast("Đã tới ngày %d — Tết Trung Thu!" % (day + 1))
 
 
 func _ripen() -> void:

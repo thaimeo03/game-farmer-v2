@@ -55,6 +55,22 @@ func ripen_all() -> void:
 			plot._refresh()
 
 
+## Waters up to `limit` plots that need it (rain, visiting neighbors). Returns how many.
+func water_dry(limit := 1 << 30) -> int:
+	var n := 0
+	for plot: FarmPlot in _plots.values():
+		if n < limit and plot.can(&"water"):
+			plot.perform(&"water")
+			n += 1
+	return n
+
+
+func _process(_delta: float) -> void:
+	# rain waters the whole farm (checked twice a second)
+	if Engine.get_process_frames() % 30 == 0 and GameState.is_raining():
+		water_dry()
+
+
 func expand_cost() -> int:
 	return land_cost * (size.x - 5)
 

@@ -10,6 +10,9 @@ var recipes := {} ## StringName -> RecipeData
 var furniture := {} ## StringName -> FurnitureData (same id as its ItemData)
 var outfits := {} ## StringName -> OutfitData (same id as its ItemData)
 var pets := {} ## StringName -> PetData (same id as its ItemData)
+var npcs := {} ## StringName -> NpcData
+var quests := {} ## StringName -> QuestData (tutorial, NPC and event quests; dailies are generated)
+var events := {} ## StringName -> EventData
 
 
 func _init() -> void:
@@ -20,6 +23,9 @@ func _init() -> void:
 	_scan("res://resources/furniture", furniture)
 	_scan("res://resources/outfits", outfits)
 	_scan("res://resources/pets", pets)
+	_scan("res://resources/npcs", npcs)
+	_scan("res://resources/quests", quests)
+	_scan("res://resources/events", events)
 	var found := {}
 	_scan("res://resources/zones", found)
 	for z: ZoneData in found.values():

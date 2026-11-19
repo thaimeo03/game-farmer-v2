@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EventData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/event_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/items/mooncake.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/items/star_lantern.tres" id="3"]
+[ext_resource type="PackedScene" path="res://assets/models/props/lantern_post.glb" id="4"]
+[ext_resource type="Resource" path="res://resources/quests/ev_mid_autumn.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="6"]
+
+[resource]
+script = ExtResource("1")
+id = &"mid_autumn"
+title = "Tết Trung Thu"
+letter = "Lễ hội Trăng Rằm đã bắt đầu! Phố Chợ và Công Viên treo đèn lồng, có gian hàng bánh trung thu và đèn ông sao. Ghé chơi và tặng bánh cho hàng xóm nhé!"
+first_day = 13
+last_day = 17
+zones = Array[StringName]([&"market_town", &"fun_park"])
+stall_title = "Gian hàng Trung Thu"
+stock = Array[ExtResource("6")]([ExtResource("2"), ExtResource("3")])
+decor = ExtResource("4")
+quest = ExtResource("5")

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"q_co_lan"
+title = "Món ngon cho cả xóm"
+kind = 2
+giver = &"co_lan"
+description = "Cô Lan muốn nấu một bữa tiệc nhỏ, nhờ bạn phụ bếp."
+steps = Array[Dictionary]([{"do": "craft", "count": 2, "text": "Chế biến 2 món ở các máy trong nông trại", "zone": "my_farm", "at": "Oven"}])
+reward_coins = 120
+reward_xp = 40
+reward_items = {&"pumpkin_pie": 1}

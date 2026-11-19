@@ -37,6 +37,10 @@ func add_xp(amount: int) -> void:
 
 func reward(action: StringName) -> void:
 	add_xp(XP.get(action, 0))
+	match action: # minigames report as "race", rare fish as "fish_rare"
+		&"race": Quests.notify(&"play")
+		&"fish_rare": Quests.notify(&"fish")
+		_: Quests.notify(action)
 
 
 func is_unlocked(zone: ZoneData) -> bool:

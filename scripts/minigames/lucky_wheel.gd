@@ -54,6 +54,7 @@ func spin(use_ticket: bool, animate := true) -> int:
 		GameState.inventory.remove(Database.item(&"spin_ticket"))
 	else:
 		GameState.spend(price)
+	Quests.notify(&"play")
 	var index := pick_prize()
 	if animate:
 		spinning = true

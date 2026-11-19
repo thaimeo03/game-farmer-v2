@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"q_chi_mai"
+title = "Buổi diễn thời trang"
+kind = 2
+giver = &"chi_mai"
+description = "Chị Mai cần người mẫu cho buổi diễn thử."
+steps = Array[Dictionary]([{"do": "visit", "count": 1, "text": "Tới Phố Thời Trang", "what": "fashion_avenue", "zone": "fashion_avenue"}, {"do": "emote", "count": 3, "text": "Lên sân khấu và biểu diễn 3 biểu cảm", "zone": "fashion_avenue", "at": "Stage"}])
+reward_xp = 40
+reward_gems = 5
+reward_items = {&"glasses_round": 1}

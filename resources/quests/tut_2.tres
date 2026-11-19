@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tut_2"
+title = "Hướng dẫn 2: Thư và mùa thu hoạch"
+kind = 0
+steps = Array[Dictionary]([{"do": "mail", "count": 1, "text": "Mở hộp thư trước nhà và nhận quà chào mừng", "zone": "my_farm", "at": "Mailbox"}, {"do": "harvest", "count": 1, "text": "Tưới lại mỗi khi đất khô, chờ cây chín rồi thu hoạch", "zone": "my_farm", "at": "FarmGrid"}])
+reward_coins = 40
+reward_xp = 15
+next = &"tut_3"

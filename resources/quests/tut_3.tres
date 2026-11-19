@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tut_3"
+title = "Hướng dẫn 3: Lên phố"
+kind = 0
+steps = Array[Dictionary]([{"do": "visit", "count": 1, "text": "Ra trạm xe buýt, đi tới Phố Chợ", "what": "market_town", "zone": "market_town"}, {"do": "sell", "count": 1, "text": "Bán nông sản ở Chợ Nông Sản", "zone": "market_town", "at": "Market"}, {"do": "buy", "count": 1, "text": "Mua thêm hạt giống ở Tiệm Hạt Giống", "zone": "market_town", "at": "SeedShop"}])
+reward_coins = 60
+reward_xp = 20
+reward_items = {&"seed_pumpkin": 2}
+next = &"tut_4"

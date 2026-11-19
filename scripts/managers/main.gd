@@ -6,6 +6,8 @@ extends Node3D
 var _zones := {} # zone id -> zone root
 var _zone: Node
 var _busy := false
+var _day_night: DayNight
+var _neighbors: NeighborDirector
 
 @onready var _player: Player = $Player
 @onready var _hud: Hud = $HUD
@@ -13,6 +15,13 @@ var _busy := false
 
 func _ready() -> void:
 	_hud.bind(_player)
+	_day_night = DayNight.new()
+	_day_night.player = _player
+	add_child(_day_night)
+	_neighbors = NeighborDirector.new()
+	_neighbors.main = self
+	_neighbors.set_player(_player)
+	add_child(_neighbors)
 	GameState.travel_requested.connect(travel)
 	var loaded := SaveManager.load_game()
 	await _enter_zone(GameState.current_zone if loaded else &"my_farm", loaded)
@@ -49,6 +58,7 @@ func travel(zone_id: StringName, spawn: StringName = &"") -> void:
 	SaveManager.save_game()
 	GameState.ui_busy = false
 	_busy = false
+	Quests.notify(&"visit", zone_id)
 
 
 func _enter_zone(zone_id: StringName, at_bus_stop: bool, spawn: StringName = &"") -> void:
@@ -68,6 +78,17 @@ func _enter_zone(zone_id: StringName, at_bus_stop: bool, spawn: StringName = &""
 	var marker := _zone.get_node_or_null(NodePath(spawn if spawn else &"PlayerSpawn")) as Node3D
 	var target: Node3D = marker if spawn and marker else (stop.exit_point if stop and (at_bus_stop or not marker) else marker)
 	_player.teleport(target.global_position if target else Vector3.UP)
+	_day_night.set_zone(_zone, data.id == &"my_house")
+	_neighbors.enter(_zone, data.id)
+
+
+func current_zone_root() -> Node:
+	return _zone
+
+
+## A zone root if it was visited this session (kept in the cache), else null.
+func cached_zone(zone_id: StringName) -> Node:
+	return _zones.get(zone_id)
 
 
 func _bus_stop() -> BusStop:

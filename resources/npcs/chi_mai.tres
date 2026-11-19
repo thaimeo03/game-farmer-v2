@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_chi_mai.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/glasses_sun.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"chi_mai"
+display_name = "Chị Mai"
+title = "Nhà thiết kế"
+base_id = "character-female-e"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"wool", &"wool_scarf", &"mooncake", &"shell_conch"])
+dislikes = Array[StringName]([&"trash_bones", &"fish_carp"])
+schedule = PackedStringArray("8 fashion_avenue FashionShop", "12 fashion_avenue Stage", "16 market_town PetShop", "20 home")
+lines = Array[String](["Phối đồ là phải có điểm nhấn, như cái mũ chẳng hạn.", "Mẫu mới tuần này đẹp lắm, ghé xem nhé!"])
+lines_friend = Array[String](["Hôm nay em mặc hợp màu ghê.", "Len cừu nhà em làm khăn ấm lắm đó."])
+lines_close = Array[String](["Chị sẽ may riêng cho em một bộ thật đặc biệt.", "Em có gu thời trang thật sự đó!"])
+quest = ExtResource("q")

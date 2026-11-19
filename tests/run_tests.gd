@@ -6,6 +6,7 @@ var _fails := 0
 
 
 func _ready() -> void:
+	Quests.enabled = false # quest rewards would disturb the coin checks; test_social turns it back on
 	await get_tree().process_frame
 	await test_farm()
 	test_economy()
@@ -16,6 +17,7 @@ func _ready() -> void:
 	await test_fashion()
 	await test_camera()
 	await test_fun()
+	await test_social()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -92,9 +94,9 @@ func test_economy() -> void:
 	city.free()
 
 	gs.clock = 0.0
-	_check(gs.time_text() == "Ngày 1  06:00", "clock start")
+	_check(gs.time_text().begins_with("Ngày 1  06:00"), "clock start")
 	gs.clock = 18.0 * 60.0 / gs.MINUTES_PER_SECOND
-	_check(gs.time_text() == "Ngày 2  00:00", "clock rolls day")
+	_check(gs.time_text().begins_with("Ngày 2  00:00"), "clock rolls day")
 
 
 
@@ -524,6 +526,189 @@ func test_fun() -> void:
 	_check(GameState.coins - c1 >= 100 and GameState.coins - c1 <= 300, "treasure opens once a day")
 	isle.free()
 
+
+
+
+## Sets the clock to day `d` (0-based), minute `m` of that day.
+func _at(d: int, m: int) -> void:
+	GameState.clock = (d * 1440 + m - GameState.DAY_START_MINUTE) / GameState.MINUTES_PER_SECOND
+	GameState.rain_until = 0.0
+
+
+func test_social() -> void:
+	# --- weather & day/night
+	_check(GameState.rain_window(0).x == -1, "first day is always dry")
+	_check(GameState.rain_window(7) == GameState.rain_window(7), "rain is deterministic")
+	var wet := 0
+	var daytime := true
+	for d in range(1, 301):
+		var w := GameState.rain_window(d)
+		if w.x >= 0:
+			wet += 1
+			daytime = daytime and w.y > w.x and w.x >= 8 * 60 and w.y <= 19 * 60
+	_check(wet > 60 and wet < 150, "about a third of days rain (%d/300)" % wet)
+	_check(daytime, "rain only in daytime hours")
+	var rainy := 1
+	while GameState.rain_window(rainy).x < 0:
+		rainy += 1
+	var win := GameState.rain_window(rainy)
+	_at(rainy, win.x + 10)
+	_check(GameState.is_raining(), "raining inside the window")
+	_at(rainy, win.y + 10)
+	_check(not GameState.is_raining() and GameState.has_rainbow(), "rainbow right after the rain")
+	_check(DayNight.daylight(12 * 60) == 1.0 and DayNight.daylight(0) == 0.0, "noon bright, midnight dark")
+
+	var farm: Node = load("res://scenes/zones/my_farm.tscn").instantiate()
+	add_child(farm)
+	await get_tree().process_frame
+	var grid: FarmGrid = farm.get_node(^"FarmGrid")
+	var plot := grid.get_plot(Vector2i(0, 0))
+	plot.problem_chance = 0.0
+	plot.perform(&"till")
+	plot.perform(&"plant", Database.crop(&"carrot"))
+	_at(0, 9 * 60) # day 1 never rains
+	for i in 40:
+		await get_tree().process_frame
+	_check(plot.can(&"water"), "no rain: the plot stays dry")
+	GameState.rain_until = GameState.clock + 600.0
+	for i in 40:
+		await get_tree().process_frame
+	_check(plot.is_watered, "rain waters the crops")
+	GameState.rain_until = 0.0
+
+	# --- neighbors: data, schedules point at real places
+	_check(Database.npcs.size() >= 6, "6+ neighbors")
+	var scenes := {}
+	for npc: NpcData in Database.npcs.values():
+		_check(npc.display_name != "" and npc.lines.size() > 0 and npc.quest != null and npc.outfits.size() > 0, "%s has looks, lines and a quest" % npc.id)
+		for entry in npc.schedule:
+			var parts := entry.split(" ")
+			if parts[1] == "home":
+				continue
+			var zone := Database.zone(StringName(parts[1]))
+			_check(zone != null, "%s: zone %s exists" % [npc.id, parts[1]])
+			if zone and not scenes.has(zone.id):
+				scenes[zone.id] = load(zone.scene_path).instantiate()
+			_check(zone != null and scenes[zone.id].find_child(parts[2], true, false) != null, "%s: anchor %s in %s" % [npc.id, parts[2], parts[1]])
+	var tam: NpcData = Database.npcs[&"bac_tam"]
+	_check(tam.where(7 * 60) == PackedStringArray(["market_town", "SeedShop"]), "Bác Tâm at the seed shop at 7:00")
+	_check(tam.where(2 * 60)[0] == "home", "Bác Tâm home at night")
+	_at(3, Social.VISIT_MINUTE + 5)
+	_check(Social.where(Social.visitor(), GameState.minute_of_day())[0] == "my_farm", "the day's visitor is at the farm")
+
+	# director: spawn at the schedule spot, leave when the schedule moves on, walk there
+	var town: Node3D = scenes[&"market_town"]
+	add_child(town)
+	var director := NeighborDirector.new()
+	add_child(director)
+	_at(3, 7 * 60)
+	director.enter(town, &"market_town")
+	var tam_n: Neighbor = director._people.get(&"bac_tam")
+	_check(tam_n != null, "Bác Tâm spawned in town at 7:00")
+	await get_tree().physics_frame
+	var shop: Node3D = town.get_node(^"SeedShop")
+	_check(tam_n != null and tam_n.global_position.distance_to(shop.global_position) < 6.0, "standing by the seed shop")
+	_at(3, 11 * 60 + 5)
+	director.update(false)
+	_check(tam_n != null and tam_n.leaving, "leaves when the schedule says bus terminal")
+	var d0 := tam_n.global_position.distance_to(director.entry())
+	for i in 60:
+		await get_tree().physics_frame
+	_check(is_instance_valid(tam_n) and tam_n.global_position.distance_to(director.entry()) < d0 - 0.8, "walks towards the bus stop")
+	# event decor + stall during the Mid-Autumn days
+	_at(12, 9 * 60) # day 13 of the month
+	_check(Quests.active_event() != null and Quests.active_event().id == &"mid_autumn", "Mid-Autumn active on day 13")
+	director.update(false)
+	var decor := town.get_node_or_null(^"EventSpot/EventDecor")
+	_check(decor != null and decor.find_children("*", "ShopNpc", true, false).size() == 1, "event stall put up in town")
+	_at(20, 9 * 60)
+	director.update(false)
+	await get_tree().process_frame
+	_check(town.get_node_or_null(^"EventSpot/EventDecor") == null, "decor removed after the event")
+	director.free()
+	for z: Node in scenes.values():
+		z.free()
+
+	# --- friendship, gifts, mail, farm visit
+	Social.points.clear()
+	GameState.daily.clear()
+	Social.talk(tam)
+	Social.talk(tam)
+	_check(int(Social.points["bac_tam"]) == 2, "first chat of the day counts once")
+	var pumpkin := Database.item(&"pumpkin")
+	GameState.inventory.add(pumpkin, 2)
+	Social.gift(tam, pumpkin)
+	_check(int(Social.points["bac_tam"]) == 10, "a liked gift gives 8")
+	_check(Social.gift(tam, pumpkin).begins_with("Hôm nay") and GameState.inventory.count(pumpkin) == 1, "one gift a day, item kept")
+	Social.points["bac_tam"] = 59
+	GameState.daily.clear()
+	Social.talk(tam)
+	_check(Social.hearts(&"bac_tam") == 3, "3 hearts at 60 points")
+	Social.mail.clear()
+	_at(5, Social.VISIT_MINUTE + 1)
+	var plot2 := grid.get_plot(Vector2i(1, 0))
+	plot2.problem_chance = 0.0
+	plot2.perform(&"till")
+	plot2.perform(&"plant", Database.crop(&"carrot"))
+	_check(Social.run_visit(grid) and not Social.run_visit(grid), "one farm visit a day")
+	_check(plot2.is_watered and Social.mail.size() == 1, "the visitor watered and left a letter")
+	var gift_item := Database.item(StringName(Social.mail[0].item))
+	var had := GameState.inventory.count(gift_item)
+	Social.claim(0)
+	_check(GameState.inventory.count(gift_item) == had + 2 and Social.mail.is_empty(), "claiming a letter gives its gift")
+	farm.free()
+
+	# --- quests: the whole tutorial, dailies, NPC quest, event quest
+	Quests.enabled = true
+	Quests.active.clear()
+	Quests.done.clear()
+	Quests._daily_day = -1
+	_at(0, 7 * 60)
+	Quests.start(Quests.TUTORIAL_START, true)
+	for q: QuestData in Database.quests.values():
+		for step: Dictionary in q.steps:
+			if step.has("at") and step.has("zone"):
+				var z: Node = load(Database.zone(StringName(step.zone)).scene_path).instantiate()
+				_check(z.find_child(step.at, true, false) != null, "%s guide target %s exists" % [q.id, step.at])
+				z.free()
+	var coins := GameState.coins
+	for a: StringName in [&"till", &"plant", &"water"]:
+		Quests.notify(a)
+	_check(Quests.is_done(&"tut_1") and Quests.is_active(&"tut_2") and GameState.coins == coins + 30, "tutorial 1 done, pays, chains to 2")
+	for a: Array in [[&"mail"], [&"harvest"], [&"visit", &"fun_park"], [&"visit", &"market_town"], [&"sell"], [&"buy"], [&"talk"], [&"emote"], [&"gift"]]:
+		Quests.notify(a[0], a[1] if a.size() > 1 else &"")
+	_check(Quests.is_done(&"tut_4") and not Quests.is_active(&"tut_3"), "a new player is guided through the whole tutorial")
+	var dailies := Quests.active.keys().filter(func(id: String) -> bool: return id.begins_with("daily_"))
+	var done_dailies := Quests.done.keys().filter(func(id: String) -> bool: return id.begins_with("daily_"))
+	_check(dailies.size() + done_dailies.size() == Quests.DAILY_COUNT and dailies.size() > 0, "3 daily quests (the tutorial may already finish one)")
+	var first_daily := Quests.quest(StringName(dailies[0]))
+	coins = GameState.coins
+	Quests.notify(StringName(first_daily.steps[0].do), &"", int(first_daily.steps[0].count))
+	_check(Quests.is_done(first_daily.id) and GameState.coins >= coins + first_daily.reward_coins, "daily quest completes and pays")
+	_at(1, 7 * 60)
+	Quests.notify(&"nothing")
+	_check(not Quests.is_active(first_daily.id) and not Quests.is_done(first_daily.id), "yesterday's dailies are gone")
+	_check(Quests.active.keys().filter(func(id: String) -> bool: return id.begins_with("daily_1_")).size() == 3, "new dailies today")
+	Quests.start(tam.quest.id)
+	Quests.notify(&"gift", &"carrot")
+	_check(Quests.is_active(tam.quest.id), "NPC quest wants a pumpkin, not a carrot")
+	Quests.notify(&"gift", &"pumpkin")
+	_check(Quests.is_done(tam.quest.id), "NPC quest done with the right gift")
+	Social.mail.clear()
+	_at(42, 9 * 60) # day 13 of the second month
+	Quests.notify(&"nothing")
+	_check(Quests.is_active(&"ev_mid_autumn") and Social.mail.size() == 1, "event quest and letter when the festival starts")
+	Quests.notify(&"buy", &"mooncake", 3)
+	Quests.notify(&"gift", &"mooncake", 3)
+	_check(Quests.is_done(&"ev_mid_autumn"), "event quest completes")
+	_at(50, 9 * 60)
+	Quests.notify(&"nothing")
+	_check(not Quests.is_active(&"ev_mid_autumn"), "no event quest outside the festival")
+	var saved := Quests.to_save()
+	Quests.active.clear()
+	Quests.load_save(JSON.parse_string(JSON.stringify(saved)))
+	_check(Quests.is_done(&"tut_4") and Quests.active.size() == 3, "quests survive save/load")
+	Quests.enabled = false
 
 func _check(ok: bool, msg: String) -> void:
 	if not ok:

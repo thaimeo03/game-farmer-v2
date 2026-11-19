@@ -32,6 +32,8 @@ var _preview_root: Node3D
 var _preview_builder: Callable
 var admin: AdminPanel
 var _caro: CaroPanel
+var _tracker: QuestTracker
+var _emotes: EmoteWheel
 
 @onready var _coins: Label = %Coins
 @onready var _gems: Label = %Gems
@@ -63,6 +65,10 @@ func _ready() -> void:
 	_build_preview_panel()
 	_caro = CaroPanel.new()
 	$Root.add_child(_caro)
+	_tracker = QuestTracker.new()
+	$Root.add_child(_tracker)
+	_emotes = EmoteWheel.new()
+	$Root.add_child(_emotes)
 	admin = AdminPanel.new()
 	admin.hud = self
 	add_child(admin)
@@ -80,6 +86,8 @@ func bind(p: Player) -> void:
 		b.pressed.connect(player.select_tool.bind(i))
 		_slots.add_child(b)
 	player.tool_changed.connect(_refresh_quickbar)
+	_tracker.bind(p)
+	_emotes.player = p
 	_refresh_quickbar()
 
 
@@ -109,6 +117,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		open_wardrobe()
 	elif event.is_action_pressed(&"journal") and not GameState.ui_busy:
 		open_journal()
+	elif event.is_action_pressed(&"quest_log") and not GameState.ui_busy:
+		open_quests()
+	elif event.is_action_pressed(&"emote_wheel") and player:
+		if _emotes.visible:
+			close_panels()
+		elif not GameState.ui_busy:
+			_open_modal(_emotes)
 	elif event.is_action_pressed(&"inventory") and not _shop_panel.visible:
 		_inventory_panel.visible = not _inventory_panel.visible
 		_refresh_inventory()
@@ -187,6 +202,7 @@ func open_menu(title: String, rows: Array) -> void:
 			b.text = spec[0]
 			b.disabled = not spec[2]
 			b.focus_mode = Control.FOCUS_NONE
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			var action: Callable = spec[1]
 			b.pressed.connect(func() -> void:
 				close_panels()
@@ -267,6 +283,43 @@ func open_journal() -> void:
 	open_menu("Sổ Tay Cá (J)", rows)
 
 
+## Quest log (L): active quests with progress and rewards, then the neighbors.
+func open_quests() -> void:
+	var rows := []
+	for q in Quests.active_list():
+		var kind: String = ["Hướng dẫn", "Hằng ngày", "Hàng xóm", "Sự kiện"][q.kind]
+		var line := Quests.progress_text(q.id)
+		var head := line if line.begins_with(q.title) else "%s\n• %s" % [q.title, line]
+		rows.append({"text": "[%s] %s\nThưởng: %s" % [kind, head, q.reward_text()]})
+	var ev := Quests.active_event()
+	if ev:
+		rows.append({"text": "Đang diễn ra: %s (ngày %d-%d mỗi tháng)" % [ev.title, ev.first_day, ev.last_day]})
+	rows.append({"text": "— Hàng xóm —"})
+	var m := GameState.minute_of_day()
+	for npc in Social.npc_list():
+		var w := Social.where(npc, m)
+		var zone := Database.zone(StringName(w[0]))
+		rows.append({"text": "%s (%s)  %s — đang ở: %s" % [npc.display_name, npc.title, Social.hearts_text(npc.id), zone.display_name if zone else "nhà riêng"]})
+	open_menu("Sổ Nhiệm Vụ (L)", rows)
+
+
+## Letters in the mailbox: read, take the gift.
+func open_mail() -> void:
+	var rows := []
+	for i in Social.mail.size():
+		var mail: Dictionary = Social.mail[i]
+		var item := Database.item(StringName(mail.item)) if mail.item != "" else null
+		var gift := "\nQuà: %d %s" % [int(mail.n), item.display_name] if item and int(mail.n) > 0 else ""
+		rows.append({"text": "Từ %s:\n%s%s" % [mail.from, mail.text, gift],
+			"buttons": [["Nhận quà" if gift else "Đã đọc", _claim_mail.bind(i), true]]})
+	open_menu("Hộp Thư", rows)
+
+
+func _claim_mail(index: int) -> void:
+	Social.claim(index)
+	open_mail()
+
+
 ## Small line under the top bar (e.g. house beauty score). Empty hides it.
 func show_info(text: String) -> void:
 	_info.text = text
@@ -293,6 +346,7 @@ func close_panels() -> void:
 	_shop_panel.hide()
 	_preview_panel.hide()
 	_caro.hide()
+	_emotes.hide()
 	_shop = null
 	_race = null
 	if _modal:

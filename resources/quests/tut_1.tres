@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tut_1"
+title = "Hướng dẫn 1: Bắt đầu làm nông"
+kind = 0
+steps = Array[Dictionary]([{"do": "till", "count": 1, "text": "Cầm Cuốc (phím 1), đứng cạnh ruộng và bấm E để cuốc 1 ô đất", "zone": "my_farm", "at": "FarmGrid"}, {"do": "plant", "count": 1, "text": "Chọn Hạt giống (phím 3) rồi gieo vào ô vừa cuốc", "zone": "my_farm", "at": "FarmGrid"}, {"do": "water", "count": 1, "text": "Cầm Bình tưới (phím 2) và tưới ô vừa gieo", "zone": "my_farm", "at": "FarmGrid"}])
+reward_coins = 30
+reward_xp = 10
+next = &"tut_2"

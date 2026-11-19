@@ -19,6 +19,8 @@
 [ext_resource type="Script" path="res://scripts/zones/door.gd" id="door"]
 [ext_resource type="PackedScene" path="res://assets/models/props/boat.glb" id="m_boat"]
 
+[ext_resource type="Script" path="res://scripts/world/street_lamp.gd" id="p9_lamp"]
+
 [sub_resource type="SphereShape3D" id="Near1_8"]
 radius = 1.8
 
@@ -126,3 +128,13 @@ shape = SubResource("Near1_8")
 
 [node name="Boat" parent="." instance=ExtResource("m_boat")]
 transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -11, -0.35, -14)
+
+[node name="Lamps" type="Node3D" parent="."]
+
+[node name="Lamp0" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -4, 0, 8)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp1" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 4, 0, 8)
+script = ExtResource("p9_lamp")

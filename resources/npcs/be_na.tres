@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/social/npc_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/quests/q_be_na.tres" id="q"]
+[ext_resource type="Script" path="res://scripts/fashion/outfit_data.gd" id="os"]
+[ext_resource type="Resource" path="res://resources/outfits/hat_bunny_ears.tres" id="o0"]
+
+[resource]
+script = ExtResource("1")
+id = &"be_na"
+display_name = "Bé Na"
+title = "Học sinh"
+base_id = "character-female-a"
+outfits = Array[ExtResource("os")]([ExtResource("o0")])
+likes = Array[StringName]([&"carrot_juice", &"teddy", &"mooncake", &"spin_ticket"])
+dislikes = Array[StringName]([&"fertilizer", &"trash_can"])
+schedule = PackedStringArray("8 bus_terminal TicketBooth", "10 fun_park LuckyWheel", "15 fun_park CaroTable", "18 market_town Fountain", "20 home")
+lines = Array[String](["Anh chị có biết chơi cờ caro không?", "Vòng quay may mắn hôm nay quay trúng gì chưa?"])
+lines_friend = Array[String](["Em thắng máy mức Khó rồi đó, giỏi chưa!", "Đu quay nhìn từ trên cao đẹp lắm!"])
+lines_close = Array[String](["Anh chị là bạn thân nhất của em!", "Trung Thu này mình đi rước đèn chung nha!"])
+quest = ExtResource("q")

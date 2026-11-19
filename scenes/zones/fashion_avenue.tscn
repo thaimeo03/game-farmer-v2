@@ -51,6 +51,8 @@
 [ext_resource type="Resource" path="res://resources/items/radio.tres" id="fur22"]
 [ext_resource type="Resource" path="res://resources/items/bathtub.tres" id="fur23"]
 
+[ext_resource type="Script" path="res://scripts/world/street_lamp.gd" id="p9_lamp"]
+
 [sub_resource type="StandardMaterial3D" id="PaveMat"]
 albedo_color = Color(0.92, 0.85, 0.88, 1)
 
@@ -235,3 +237,21 @@ transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Buildings/Bld4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 shape = SubResource("BldShape")
+
+[node name="Lamps" type="Node3D" parent="."]
+
+[node name="Lamp0" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -3.5, 0, 8)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp1" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 3.5, 0, 8)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp2" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -11, 0, -9)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp3" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 11, 0, -9)
+script = ExtResource("p9_lamp")

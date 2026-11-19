@@ -64,6 +64,7 @@ func deliver(index: int) -> bool:
 		GameState.inventory.remove(Database.item(StringName(id)), int(order.items[id]))
 	GameState.earn(int(order.coins))
 	Progression.add_xp(int(order.xp))
+	Quests.notify(&"order")
 	GameState.toast("Đã giao đơn! +%d xu, +%d EXP" % [int(order.coins), int(order.xp)])
 	orders[index] = make_order(GameState.clock + cooldown)
 	_send_truck()

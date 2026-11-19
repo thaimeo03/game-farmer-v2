@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tut_4"
+title = "Hướng dẫn 4: Làm quen hàng xóm"
+kind = 0
+steps = Array[Dictionary]([{"do": "talk", "count": 1, "text": "Trò chuyện với một hàng xóm (bấm L để xem họ đang ở đâu)", "zone": "market_town", "at": "Fountain"}, {"do": "emote", "count": 1, "text": "Bấm G và chào mọi người bằng một biểu cảm"}, {"do": "gift", "count": 1, "text": "Tặng một món quà cho hàng xóm (đúng món họ thích sẽ thân nhanh hơn)"}])
+reward_coins = 80
+reward_xp = 30
+reward_gems = 3

@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://assets/models/props/shop_stall.glb" id="stall"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_suburban/planter.glb" id="planter"]
 
+[ext_resource type="Script" path="res://scripts/world/street_lamp.gd" id="p9_lamp"]
+
 [sub_resource type="StandardMaterial3D" id="PaveMat"]
 albedo_color = Color(0.78, 0.76, 0.72, 1)
 
@@ -103,3 +105,13 @@ transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 4.5, 0, -1.2)
 
 [node name="Planter3" parent="." instance=ExtResource("planter")]
 transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 8, 0, -1.2)
+
+[node name="Lamps" type="Node3D" parent="."]
+
+[node name="Lamp0" type="Node3D" parent="Lamps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10, 0, 1.5)
+script = ExtResource("p9_lamp")
+
+[node name="Lamp1" type="Node3D" parent="Lamps"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 10, 0, 1.5)
+script = ExtResource("p9_lamp")

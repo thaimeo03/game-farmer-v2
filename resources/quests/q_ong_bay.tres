@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://scripts/quests/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"q_ong_bay"
+title = "Bưu tá phụ việc"
+kind = 2
+giver = &"ong_bay"
+description = "Ông Bảy bận quá, nhờ bạn đi phát quà giúp."
+steps = Array[Dictionary]([{"do": "gift", "count": 3, "text": "Tặng quà cho 3 hàng xóm (gửi ở Bưu điện cũng được)"}])
+reward_coins = 150
+reward_xp = 40
