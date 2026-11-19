@@ -17,6 +17,7 @@ extends StaticBody3D
 @export var water_level := -0.35
 @export var sand_height := 0.25 ## sand up to this far above the water (wider = beach)
 @export var paths: Array[Rect2] = [] ## dirt-colored strips
+@export var island_radius := 0.0 ## > 0: land is an island of this radius, sea all around
 @export var random_seed := 1
 @export var grass := Color(0.46, 0.76, 0.32)
 @export var grass_dark := Color(0.3, 0.58, 0.25)
@@ -44,6 +45,8 @@ func height_at(x: float, z: float) -> float:
 	for p in ponds:
 		var d := Vector2(x, z).distance_to(Vector2(p.x, p.y))
 		h -= pond_depth * (1.0 - smoothstep(p.z * 0.55, p.z, d))
+	if island_radius > 0.0:
+		h -= pond_depth * 1.5 * smoothstep(island_radius * 0.7, island_radius, Vector2(x, z).length())
 	return h
 
 
@@ -89,7 +92,10 @@ func _build() -> void:
 	water.albedo_color = Color(0.35, 0.72, 0.95, 0.78)
 	water.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	water.roughness = 0.15
-	for p in ponds:
+	var seas := ponds.duplicate()
+	if island_radius > 0.0:
+		seas.append(Vector3(0, 0, size * 0.55))
+	for p in seas:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2.ONE * p.z * 2.2
 		plane.material = water

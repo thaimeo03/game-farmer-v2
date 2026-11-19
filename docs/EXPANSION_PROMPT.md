@@ -47,7 +47,7 @@ Mỗi khu là **một scene riêng** trong `scenes/zones/`, có **trạm xe buý
 | **Đại Lộ Thời Trang** (thành phố 2) | `zones/fashion_avenue.tscn` | Shop thời trang (thử đồ có xem trước 3D), shop nội thất, tiệm tóc, quảng trường sự kiện, sân khấu nhảy | Cấp 3 |
 | **Công Viên Vui Vẻ** (khu giải trí) | `zones/fun_park.tscn` | Đua thú (dời từ City), vòng quay may mắn, đu quay ngồi được, ném vòng, bàn đá cờ caro | Cấp 2 |
 | **Bãi Biển Nắng Vàng** (khu du lịch) | `zones/sunny_beach.tscn` | Câu cá biển (bảng cá khác), nhặt vỏ sò, thuyền ra đảo, chụp ảnh check-in, quầy dừa | Cấp 3 |
-| **Đảo Nhỏ** (tùy chọn) | `zones/little_isle.tscn` | Hải đăng, rương kho báu hằng ngày, cá hiếm | Cấp 8 |
+| **Đảo Nhỏ** (tùy chọn) | `zones/little_isle.tscn` | Hải đăng, rương kho báu hằng ngày, cá hiếm (đi thuyền từ Bãi Biển) | Cấp 4 |
 
 **Cơ chế xe buýt**
 - `ZoneData` (Resource): `id`, `display_name`, `scene_path`, `bus_stop_marker`, `unlock_level`, `ticket_price`, `icon`, `music`.
@@ -136,7 +136,7 @@ Mỗi giai đoạn kết thúc bằng: test xanh, ảnh chụp từ ghi hình, t
 | **5** ✅ | **Nông trại nâng cao** | Mở rộng đất, khô/sâu/cỏ/phân bón, chuồng gà/bò/heo/cừu, ao cá nhà, 4 máy chế biến, đơn hàng xe tải | Vòng chơi trồng → chế biến → giao đơn chạy trọn; có test cho công thức và cho thú |
 | **6** ✅ | **Nhà riêng** | Scene trong nhà, chế độ trang trí theo lưới, 20+ món nội thất (Kenney Furniture Kit + Blender), ngồi/nằm | Đặt, xoay, cất đồ; lưu và tải bố cục đúng |
 | **7** ✅ | **Thời trang & Pet** | Nhân vật cơ sở, đổi màu, phụ kiện gắn xương, shop có phòng thử, tủ đồ; pet theo chủ, chăm sóc, đem đi đua | Thử, mua, mặc, lưu trang phục; pet theo chủ qua mọi khu |
-| **8** | **Giải trí & du lịch** | Vòng quay, đu quay, ném vòng, cờ caro AI, câu cá biển + sổ tay cá, nhặt vỏ sò, thuyền ra đảo | Mỗi mini-game có thưởng và giới hạn ngày; AI caro không đi nước sai luật |
+| **8** ✅ | **Giải trí & du lịch** | Vòng quay, đu quay, ném vòng, cờ caro AI, câu cá biển + sổ tay cá, nhặt vỏ sò, thuyền ra đảo | Mỗi mini-game có thưởng và giới hạn ngày; AI caro không đi nước sai luật |
 | **9** | **Xã hội & sự kiện** | NPC hàng xóm có lịch, hội thoại, thân thiết, quà, emote, bưu điện; nhiệm vụ tân thủ/hằng ngày; ngày–đêm, thời tiết; 1 sự kiện mùa mẫu | Người mới được hướng dẫn trọn vòng; NPC đi đúng lịch; mưa tự tưới cây |
 | **10** | **Hoàn thiện & online** | Âm thanh, cài đặt, icon thật, tối ưu (MultiMesh cho cỏ/hoa, LOD, gom draw call), điều khiển cảm ứng; **(tùy chọn) multiplayer**: Godot high-level multiplayer + server, thấy người chơi khác ở cùng khu, chat, thăm nông trại bạn bè | 60 FPS trên máy tầm trung; xuất được bản Windows/Android; (online) 2 client gặp nhau cùng khu |
 

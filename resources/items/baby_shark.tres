@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/models/kenney/food/fish.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"baby_shark"
+display_name = "Cá mập con"
+description = "Cá biển."
+category = 2
+color = Color(0.55, 0.6, 0.7, 1)
+buy_price = 0
+sell_price = 160
+model = ExtResource("2_model")
+size_range = Vector2(70, 110)

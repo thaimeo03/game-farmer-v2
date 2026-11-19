@@ -31,6 +31,7 @@ var _preview_title: Label
 var _preview_root: Node3D
 var _preview_builder: Callable
 var admin: AdminPanel
+var _caro: CaroPanel
 
 @onready var _coins: Label = %Coins
 @onready var _gems: Label = %Gems
@@ -60,6 +61,8 @@ func _ready() -> void:
 	_build_level_and_banner()
 	_build_decorate_panel()
 	_build_preview_panel()
+	_caro = CaroPanel.new()
+	$Root.add_child(_caro)
 	admin = AdminPanel.new()
 	admin.hud = self
 	add_child(admin)
@@ -104,6 +107,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		close_panels()
 	elif event.is_action_pressed(&"wardrobe") and not GameState.ui_busy and player:
 		open_wardrobe()
+	elif event.is_action_pressed(&"journal") and not GameState.ui_busy:
+		open_journal()
 	elif event.is_action_pressed(&"inventory") and not _shop_panel.visible:
 		_inventory_panel.visible = not _inventory_panel.visible
 		_refresh_inventory()
@@ -240,6 +245,28 @@ func open_wardrobe() -> void:
 	open_menu("Tủ Đồ (O)", rows)
 
 
+func open_caro() -> void:
+	_open_modal(_caro)
+	_caro.start(_caro.level)
+
+
+## Fish journal (J): every fish, how many caught and the biggest one.
+func open_journal() -> void:
+	var rows := []
+	var fish := Database.items.values().filter(func(i: ItemData) -> bool: return i.category == ItemData.Category.FISH)
+	fish.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.sell_price < b.sell_price)
+	var found := 0
+	for f: ItemData in fish:
+		var e: Dictionary = GameState.fish_journal.get(String(f.id), {})
+		if e.is_empty():
+			rows.append({"text": "???  (chưa câu được)"})
+		else:
+			found += 1
+			rows.append({"text": "%s — %d con, lớn nhất %.1f cm" % [f.display_name, int(e.count), float(e.max)]})
+	rows.push_front({"text": "Đã khám phá %d/%d loài" % [found, fish.size()]})
+	open_menu("Sổ Tay Cá (J)", rows)
+
+
 ## Small line under the top bar (e.g. house beauty score). Empty hides it.
 func show_info(text: String) -> void:
 	_info.text = text
@@ -265,6 +292,7 @@ func close_panels() -> void:
 	_inventory_panel.hide()
 	_shop_panel.hide()
 	_preview_panel.hide()
+	_caro.hide()
 	_shop = null
 	_race = null
 	if _modal:

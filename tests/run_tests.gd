@@ -15,6 +15,7 @@ func _ready() -> void:
 	await test_house()
 	await test_fashion()
 	await test_camera()
+	await test_fun()
 	print("FAILURES: %d" % _fails if _fails else "ALL PASS")
 	get_tree().quit(1 if _fails else 0)
 
@@ -110,20 +111,22 @@ func test_minigames() -> void:
 	_check(race.racers[race._winner].node.position.z <= -race.track_length, "winner crossed the line")
 	race.queue_free()
 
-	var spot := FishingSpot.new()
-	var counts := [0, 0, 0, 0, 0]
+	var counts := {}
 	for i in 4000:
-		counts[spot._pick()] += 1
-	_check(counts.min() > 0, "every catch can happen")
-	_check(counts[2] == counts.min(), "gold fish is the rarest catch")
-	_check(spot.catches[2].sell_price > spot.catches[0].sell_price, "rare fish sells for more")
-	spot.free()
+		var id: StringName = FishingSpot.pick(FishingSpot.TABLES[&"fresh"])[0]
+		counts[id] = counts.get(id, 0) + 1
+	_check(counts.size() == 5, "every freshwater catch can happen")
+	_check(counts[&"fish_gold"] == counts.values().min(), "gold fish is the rarest catch")
+	_check(Database.item(&"fish_gold").sell_price > Database.item(&"fish_perch").sell_price, "rare fish sells for more")
+	for table: StringName in FishingSpot.TABLES:
+		for e: Array in FishingSpot.TABLES[table]:
+			_check(Database.item(e[0]) != null, "catch %s exists" % e[0])
 
 
 func test_world() -> void:
 	# content database
 	_check(Database.item(&"fish_gold") != null and Database.crop(&"tomato") != null, "database finds items and crops by id")
-	_check(Database.zones.size() == 7 and Database.zones[0].id == &"my_farm", "7 zones, ordered")
+	_check(Database.zones.size() == 8 and Database.zones[0].id == &"my_farm", "8 zones, ordered")
 	_check(Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route).size() == 6, "6 zones on the bus route")
 	for z in Database.zones.filter(func(z: ZoneData) -> bool: return z.on_bus_route):
 		var root: Node = load(z.scene_path).instantiate()
@@ -439,6 +442,87 @@ func test_camera() -> void:
 	_check(worst < 15.0, "camera turns smoothly across 180 degrees (max step %.1f)" % worst)
 	_check(absf(wrapf(cam.global_rotation_degrees.y - 230.0, -180.0, 180.0)) < 2.0, "camera ends at the dragged yaw")
 	p.free()
+
+
+func test_fun() -> void:
+	# daily limits
+	GameState.daily.clear()
+	_check(GameState.daily_use("x", 2) and GameState.daily_use("x", 2) and not GameState.daily_use("x", 2), "daily limit enforced")
+	GameState.clock += 24 * 60 / GameState.MINUTES_PER_SECOND
+	_check(GameState.daily_use("x", 2), "limit resets the next day")
+
+	# lucky wheel: weighted prizes, pays with coins or a ticket, 5 spins a day
+	var counts := [0, 0, 0, 0, 0, 0, 0, 0]
+	for i in 4000:
+		counts[LuckyWheel.pick_prize()] += 1
+	_check(counts.min() > 0 and counts[6] == counts.min(), "every prize possible, outfit is the rarest")
+	var park: Node = load("res://scenes/zones/fun_park.tscn").instantiate()
+	add_child(park)
+	await get_tree().process_frame
+	var wheel: LuckyWheel = park.get_node(^"LuckyWheel")
+	GameState.daily.clear()
+	GameState.coins = 1000
+	var coins_before := GameState.coins
+	_check((await wheel.spin(false, false)) >= 0 and GameState.coins != coins_before, "spin with coins")
+	GameState.inventory.add(Database.item(&"spin_ticket"), 1)
+	var tickets := GameState.inventory.count(Database.item(&"spin_ticket"))
+	_check((await wheel.spin(true, false)) >= 0, "spin with a ticket")
+	_check(GameState.inventory.count(Database.item(&"spin_ticket")) <= tickets, "ticket used (a ticket prize may refund it)")
+	for i in 3:
+		await wheel.spin(false, false)
+	_check((await wheel.spin(false, false)) == -1, "no 6th spin today")
+
+	# ferris wheel cabins stay on the rim
+	var ferris: FerrisWheel = park.get_node(^"FerrisWheel")
+	for i in ferris.cabins:
+		_check(absf(ferris.cabin_position(i).distance_to(ferris.get_node(^"Ring").position) - ferris.radius) < 0.01, "cabin %d on the rim" % i)
+
+	# ring toss prizes grow with hits
+	var c0 := GameState.coins
+	RingToss.award(3)
+	_check(GameState.coins == c0 + 100, "3 hits pay 100 xu")
+	park.free()
+
+	# caro: rules, win detection, AI never plays an occupied cell, blocks a four
+	var game := CaroGame.new()
+	for x in 4:
+		game.play(x, 7, 1)
+	_check(game.ai_move(2) == Vector2i(4, 7), "hard AI blocks an open four")
+	game.play(4, 7, 1)
+	_check(game.winner == 1, "five in a row wins")
+	_check(not game.play(0, 0, 2), "no moves after the game ends")
+	var g2 := CaroGame.new()
+	var legal := true
+	for i in 60:
+		var who := 1 + i % 2
+		var m := g2.ai_move(i % 3)
+		if g2.at(m.x, m.y) != 0:
+			legal = false
+		if not g2.play(m.x, m.y, who):
+			break
+	_check(legal, "AI only picks empty cells")
+
+	# fish journal records sizes and records
+	GameState.fish_journal.clear()
+	var tuna := Database.item(&"fish_tuna")
+	var r1 := GameState.record_fish(tuna)
+	_check(r1[0] >= tuna.size_range.x and r1[0] <= tuna.size_range.y and not r1[1], "first catch has a size, not a 'record'")
+	GameState.record_fish(tuna)
+	_check(int(GameState.fish_journal["fish_tuna"].count) == 2, "journal counts catches")
+
+	# island and beach scenes load with their pieces
+	var isle: Node = load("res://scenes/zones/little_isle.tscn").instantiate()
+	add_child(isle)
+	await get_tree().process_frame
+	var terrain: Terrain = isle.get_node(^"Terrain")
+	_check(terrain.height_at(0, 0) >= 0.0 and terrain.height_at(0, -40) < terrain.water_level, "island land in the middle, sea around")
+	var chest: TreasureChest = isle.get_node(^"TreasureChest")
+	GameState.daily.clear()
+	var c1 := GameState.coins
+	chest.interact(null)
+	chest.interact(null)
+	_check(GameState.coins - c1 >= 100 and GameState.coins - c1 <= 300, "treasure opens once a day")
+	isle.free()
 
 
 func _check(ok: bool, msg: String) -> void:

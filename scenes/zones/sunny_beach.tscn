@@ -15,6 +15,29 @@
 [ext_resource type="PackedScene" path="res://assets/models/kenney/nature/rock_smallA.glb" id="n7"]
 [ext_resource type="PackedScene" path="res://scenes/minigames/fishing_pier.tscn" id="pier"]
 [ext_resource type="PackedScene" path="res://assets/models/kenney/city_commercial/detail-parasol-b.glb" id="parasol"]
+[ext_resource type="Script" path="res://scripts/minigames/shell_spawner.gd" id="shells"]
+[ext_resource type="Script" path="res://scripts/zones/door.gd" id="door"]
+[ext_resource type="PackedScene" path="res://assets/models/props/boat.glb" id="m_boat"]
+
+[sub_resource type="SphereShape3D" id="Near1_8"]
+radius = 1.8
+
+[sub_resource type="SphereShape3D" id="Near2_5"]
+radius = 2.5
+
+[sub_resource type="BoxShape3D" id="BoothBody"]
+size = Vector3(3, 0.9, 1.6)
+
+[sub_resource type="CylinderShape3D" id="TableBody"]
+height = 0.8
+radius = 0.75
+
+[sub_resource type="BoxShape3D" id="FerrisBody"]
+size = Vector3(3, 0.4, 5)
+
+[sub_resource type="CylinderShape3D" id="TowerBody"]
+height = 9.0
+radius = 1.4
 
 [node name="SunnyBeach" type="Node3D"]
 
@@ -79,3 +102,27 @@ transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 7, 0, -2)
 
 [node name="Parasol3" parent="." instance=ExtResource("parasol")]
 transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 10, 0, 2)
+
+[node name="Shells" type="Node3D" parent="."]
+script = ExtResource("shells")
+area = Rect2(-13, -6, 26, 12)
+
+[node name="BoatDock" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.1, -4.5)
+
+[node name="BoatToIsle" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -6.5)
+script = ExtResource("door")
+prompt_height = 2.4
+target_zone = &"little_isle"
+target_spawn = &"Dock"
+fare = 20
+min_level = 4
+prompt_text = "[E] Đi thuyền ra Đảo Nhỏ (20 xu, cấp 4)"
+
+[node name="Detect" type="CollisionShape3D" parent="BoatToIsle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("Near1_8")
+
+[node name="Boat" parent="." instance=ExtResource("m_boat")]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -11, -0.35, -14)

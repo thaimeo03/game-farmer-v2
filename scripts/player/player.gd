@@ -58,6 +58,8 @@ var active_pet: PetData
 
 var _target: FarmPlot
 var _sitting: Furniture
+var _riding: Node3D ## ferris cabin etc.: we follow it until end_ride()
+var _ride_offset := Vector3.ZERO
 var _pet: PetCompanion
 var _hand: BoneAttachment3D
 var _held: Node3D
@@ -176,6 +178,9 @@ func _show_tool() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _riding:
+		global_position = _riding.global_position + _ride_offset
+		return
 	if _sitting:
 		if not GameState.ui_busy and Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back").length() > 0.1:
 			stand_up()
@@ -308,6 +313,24 @@ func begin_activity(anim_name: StringName, face_point: Vector3) -> void:
 
 
 func end_activity() -> void:
+	_set_state(State.IDLE)
+
+
+## Rides along with `node` (e.g. a ferris wheel cabin) until end_ride().
+func ride(node: Node3D, offset := Vector3.ZERO) -> void:
+	_riding = node
+	_ride_offset = offset
+	state = State.ACTION
+	velocity = Vector3.ZERO
+	$CollisionShape3D.set_deferred(&"disabled", true)
+	if anim and anim.has_animation(&"idle"):
+		anim.play(&"idle")
+
+
+func end_ride(at: Vector3) -> void:
+	_riding = null
+	$CollisionShape3D.set_deferred(&"disabled", false)
+	teleport(at)
 	_set_state(State.IDLE)
 
 

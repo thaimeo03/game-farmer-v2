@@ -5,6 +5,8 @@ extends InteractZone
 
 @export var target_zone: StringName
 @export var target_spawn: StringName = &"PlayerSpawn"
+@export var fare := 0 ## xu to pay (boat ticket)
+@export var min_level := 1
 
 
 func _ready() -> void:
@@ -14,4 +16,9 @@ func _ready() -> void:
 
 
 func interact(_player: Player) -> void:
+	if Progression.level < min_level:
+		GameState.toast("Cần cấp %d" % min_level)
+		return
+	if fare > 0 and not GameState.spend(fare):
+		return
 	GameState.travel(target_zone, target_spawn)

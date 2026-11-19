@@ -6,3 +6,8 @@
 .remember/
 *.tmp
 /tests/_smoke.*
+
+# Removed scenes the Godot editor may re-save from stale open tabs
+/scenes/city/city_hub.tscn
+/scenes/farm/farm.tscn
+/scenes/main/portal.tscn

@@ -43,6 +43,8 @@ func save_game() -> bool:
 		"level": Progression.level,
 		"xp": Progression.xp,
 		"zone": String(GameState.current_zone),
+		"fish_journal": GameState.fish_journal,
+		"daily": GameState.daily,
 		"world": _world_data(),
 	}
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
@@ -74,6 +76,8 @@ func load_game() -> bool:
 	Progression.level = int(data.get("level", 1))
 	Progression.xp = int(data.get("xp", 0))
 	GameState.current_zone = StringName(data.get("zone", "my_farm"))
+	GameState.fish_journal = data.get("fish_journal", {})
+	GameState.daily = data.get("daily", {})
 	_pending = data.get("world", {})
 	if int(data.version) == 1: # v1 stored only the farm plots
 		_pending = {"farm_grid": {"plots": data.get("farm", [])}}

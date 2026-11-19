@@ -14,6 +14,7 @@ enum Category { SEED, PRODUCE, FISH, TOOL, OUTFIT, MISC, ANIMAL, GOODS, FURNITUR
 @export var sell_price := 0 ## 0 = cannot be sold
 @export var crop: CropData ## seeds only: what this seed grows into
 @export var model: PackedScene ## optional 3D model (shown e.g. when a fish is caught)
+@export var size_range := Vector2.ZERO ## fish: size in cm when caught (min, max)
 
 static var _swatches := {}
 

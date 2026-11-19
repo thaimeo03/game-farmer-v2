@@ -55,7 +55,9 @@ func interact(_player: Player) -> void:
 			GameState.toast("Cần %s - mua ở Phố Chợ" % fingerling.display_name)
 	elif is_grown():
 		for i in catch_count:
-			GameState.inventory.add(rare_catch if randf() < rare_chance else catches.pick_random())
+			var fish: ItemData = rare_catch if randf() < rare_chance else catches.pick_random()
+			GameState.inventory.add(fish)
+			GameState.record_fish(fish)
 		stocked_at = -1.0
 		Progression.reward(&"pond")
 		GameState.toast("Vớt được %d con cá!" % catch_count)

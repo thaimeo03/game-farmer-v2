@@ -13,3 +13,4 @@ color = Color(0.9, 0.6, 0.35, 1)
 buy_price = 0
 sell_price = 18
 model = ExtResource("2_model")
+size_range = Vector2(25, 60)

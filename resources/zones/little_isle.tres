@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneData" format=3]
+
+[ext_resource type="Script" path="res://scripts/zones/zone_data.gd" id="1_zone"]
+
+[resource]
+script = ExtResource("1_zone")
+id = &"little_isle"
+display_name = "Đảo Nhỏ"
+description = "Hải đăng, rương kho báu, cá hiếm. Đi thuyền từ Bãi Biển."
+scene_path = "res://scenes/zones/little_isle.tscn"
+unlock_level = 4
+order = 6
+on_bus_route = false

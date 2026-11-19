@@ -3,21 +3,23 @@ extends InteractZone
 ## Stand here holding the rod (tool 4) and press E: a bait is used, the bobber is cast,
 ## after a random wait a fish bites ("!" over your head) - press E within `react_time`,
 ## then win the HUD timing bar. Rarer catches get a narrower, faster bar.
+## The catch table depends on the zone (fresh water / sea / island); every fish gets a size
+## that goes into the fish journal (J).
 
 const BOBBER := preload("res://assets/models/props/bobber.glb")
+## table -> [[item id, weight, green zone width 0..1, marker speed], ...]
+const TABLES := {
+	&"fresh": [[&"fish_perch", 32, 0.3, 1.0], [&"fish_carp", 24, 0.25, 1.25], [&"fish_gold", 10, 0.12, 2.1],
+		[&"trash_can", 18, 0.4, 0.8], [&"trash_bones", 16, 0.4, 0.8]],
+	&"sea": [[&"fish_mackerel", 30, 0.3, 1.1], [&"squid", 22, 0.26, 1.3], [&"crab", 18, 0.3, 1.0],
+		[&"fish_tuna", 10, 0.15, 1.9], [&"baby_shark", 4, 0.1, 2.4], [&"trash_bottle", 16, 0.4, 0.8]],
+	&"isle": [[&"fish_mackerel", 28, 0.3, 1.1], [&"fish_tuna", 25, 0.15, 1.9], [&"fish_gold", 20, 0.12, 2.1],
+		[&"swordfish", 15, 0.12, 2.2], [&"baby_shark", 12, 0.1, 2.4]],
+}
+const ZONE_TABLES := {&"sunny_beach": &"sea", &"little_isle": &"isle"}
 
 @export var cast_point: Node3D ## where the bobber lands (on the water surface)
 @export var bait: ItemData = preload("res://resources/items/bait.tres")
-@export var catches: Array[ItemData] = [
-	preload("res://resources/items/fish_perch.tres"),
-	preload("res://resources/items/fish_carp.tres"),
-	preload("res://resources/items/fish_gold.tres"),
-	preload("res://resources/items/trash_can.tres"),
-	preload("res://resources/items/trash_bones.tres"),
-]
-@export var weights := PackedFloat32Array([32, 24, 10, 18, 16]) ## relative chance per catch
-## Per catch: x = green zone width (0..1 of the bar), y = marker speed.
-@export var difficulty := PackedVector2Array([Vector2(0.3, 1.0), Vector2(0.25, 1.25), Vector2(0.12, 2.1), Vector2(0.4, 0.8), Vector2(0.4, 0.8)])
 @export var bite_wait := Vector2(2.0, 5.0) ## seconds before a bite
 @export var react_time := 1.2 ## seconds to press E after the "!"
 
@@ -95,15 +97,16 @@ func _fish(player: Player) -> void:
 
 	var caught: ItemData = null
 	if _hooked:
-		var i := _pick()
+		var entry := pick(table())
 		var hud := get_tree().get_first_node_in_group(&"hud") as Hud
-		if hud and await hud.play_timing_bar(difficulty[i].x, difficulty[i].y):
-			caught = catches[i]
+		if hud and await hud.play_timing_bar(entry[2], entry[3]):
+			caught = Database.item(entry[0])
 	bob.queue_free()
 
 	if caught:
 		GameState.inventory.add(caught)
-		GameState.toast("Câu được %s!" % caught.display_name)
+		var rec := GameState.record_fish(caught)
+		GameState.toast("Câu được %s%s!%s" % [caught.display_name, " %.1f cm" % rec[0] if rec[0] > 0.0 else "", "  Kỷ lục mới!" if rec[1] else ""])
 		Progression.reward(&"fish_rare" if caught.sell_price >= 50 else &"fish")
 		_show_catch(player, caught)
 	else:
@@ -114,16 +117,21 @@ func _fish(player: Player) -> void:
 	_prompt.visible = player.interactable == self
 
 
-func _pick() -> int:
+func table() -> Array:
+	return TABLES[ZONE_TABLES.get(GameState.current_zone, &"fresh")]
+
+
+## Weighted random entry of a catch table.
+static func pick(entries: Array) -> Array:
 	var total := 0.0
-	for w in weights:
-		total += w
+	for e in entries:
+		total += e[1]
 	var r := randf() * total
-	for i in weights.size():
-		r -= weights[i]
+	for e in entries:
+		r -= e[1]
 		if r <= 0.0:
-			return i
-	return weights.size() - 1
+			return e
+	return entries[-1]
 
 
 ## Holds the caught item's model over the player's head for a moment.
